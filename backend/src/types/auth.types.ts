@@ -34,4 +34,5 @@ export interface JwtPayload {
 
 export interface AuthenticatedRequest extends Request {
   user?: JwtPayload;
+  cookies: Record<string, string | undefined>;
 }

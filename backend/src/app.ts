@@ -1,5 +1,5 @@
 import express, { Express } from 'express';
-import cors from 'cors';
+import cors, { CorsOptions } from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
@@ -36,30 +36,37 @@ export const createApp = (): Express => {
   const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
 
   // CORS configuration supporting vercel.app domains & multi-frontend URLs
-  app.use(
-    cors({
-      origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, Postman, server-to-server)
-        if (!origin) return callback(null, true);
+  const corsOptions: CorsOptions = {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void
+    ): void => {
+      // Allow requests with no origin (mobile apps, Postman, server-to-server)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
 
-        const cleanOrigin = origin.replace(/\/$/, '');
-        if (
-          allowedOrigins.includes(cleanOrigin) ||
-          cleanOrigin.endsWith('.vercel.app') ||
-          cleanOrigin.includes('localhost') ||
-          cleanOrigin.includes('127.0.0.1')
-        ) {
-          return callback(null, true);
-        }
+      const cleanOrigin = origin.replace(/\/$/, '');
+      if (
+        allowedOrigins.includes(cleanOrigin) ||
+        cleanOrigin.endsWith('.vercel.app') ||
+        cleanOrigin.includes('localhost') ||
+        cleanOrigin.includes('127.0.0.1')
+      ) {
+        callback(null, true);
+        return;
+      }
 
-        console.warn(`[CORS Blocked] Origin not allowed: ${origin}`);
-        return callback(new Error(`CORS blocked for origin: ${origin}`));
-      },
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    })
-  );
+      console.warn(`[CORS Blocked] Origin not allowed: ${origin}`);
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  };
+
+  app.use(cors(corsOptions));
 
   // Body parsers
   app.use(express.json());

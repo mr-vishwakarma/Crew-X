@@ -11,11 +11,15 @@ export const authenticate = (
 ): void => {
   try {
     // 1. Check HTTP-only cookie first
-    let token = req.cookies?.[env.COOKIE_NAME];
+    let token: string | undefined = req.cookies?.[env.COOKIE_NAME];
 
     // 2. Check Authorization Bearer header as secondary fallback
-    if (!token && req.headers.authorization?.startsWith('Bearer ')) {
-      token = req.headers.authorization.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    if (!token && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+      const parts = authHeader.split(' ');
+      if (parts.length === 2 && parts[1]) {
+        token = parts[1];
+      }
     }
 
     if (!token) {
