@@ -6,9 +6,16 @@ interface BadgeProps {
   variant?: 'admin' | 'supervisor' | 'inspector' | 'neutral' | 'success';
   children?: React.ReactNode;
   size?: 'sm' | 'md';
+  className?: string;
 }
 
-export const Badge: React.FC<BadgeProps> = ({ role, variant, children, size = 'sm' }) => {
+export const Badge: React.FC<BadgeProps> = ({
+  role,
+  variant,
+  children,
+  size = 'sm',
+  className = '',
+}) => {
   let appliedVariant = variant;
   let text = children;
 
@@ -39,7 +46,7 @@ export const Badge: React.FC<BadgeProps> = ({ role, variant, children, size = 's
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border ${sizeClasses} ${selectedClass}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border ${sizeClasses} ${selectedClass} ${className}`}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
       {text}
