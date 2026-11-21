@@ -5,6 +5,15 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { PublicOnlyRoute } from './PublicOnlyRoute';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
+import { ProjectsListPage } from '../pages/admin/projects/ProjectsListPage';
+import { CreateProjectPage } from '../pages/admin/projects/CreateProjectPage';
+import { ProjectDetailsPage } from '../pages/admin/projects/ProjectDetailsPage';
+import { EditProjectPage } from '../pages/admin/projects/EditProjectPage';
+import { SitesListPage } from '../pages/admin/sites/SitesListPage';
+import { CreateSitePage } from '../pages/admin/sites/CreateSitePage';
+import { SiteDetailsPage } from '../pages/admin/sites/SiteDetailsPage';
+import { EditSitePage } from '../pages/admin/sites/EditSitePage';
+import { OrganizationSettingsPage } from '../pages/admin/organization/OrganizationSettingsPage';
 import { SupervisorDashboardPage } from '../pages/supervisor/SupervisorDashboardPage';
 import { InspectorDashboardPage } from '../pages/inspector/InspectorDashboardPage';
 import { ModulePlaceholderPage } from '../pages/common/ModulePlaceholderPage';
@@ -21,7 +30,6 @@ import {
   CheckCircle2,
   BarChart3,
   RefreshCw,
-  Settings,
   AlertTriangle,
   Camera,
   UserCircle,
@@ -78,18 +86,31 @@ export const AppRoutes: React.FC = () => {
         path="/admin/projects"
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
-            <ModulePlaceholderPage
-              moduleName="Projects Management"
-              role="ADMIN"
-              icon={Building2}
-              description="Manage infrastructure, capital development, and commercial client projects across your organization."
-              features={[
-                'Multi-tier project budgets & timeline tracking',
-                'Geographic site assignment and zone boundaries',
-                'Client governance & compliance milestones',
-                'Direct supervisor delegation and project lead assignments',
-              ]}
-            />
+            <ProjectsListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/projects/new"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <CreateProjectPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/projects/:id"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <ProjectDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/projects/:id/edit"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <EditProjectPage />
           </ProtectedRoute>
         }
       />
@@ -97,18 +118,31 @@ export const AppRoutes: React.FC = () => {
         path="/admin/sites"
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
-            <ModulePlaceholderPage
-              moduleName="Sites & Facilities"
-              role="ADMIN"
-              icon={MapPin}
-              description="Define physical inspection boundaries, construction zones, and GPS geofenced perimeter limits."
-              features={[
-                'GPS polygon geofencing configuration',
-                'Hazard classification and safety level tags',
-                'Site supervisor assignment and contact registers',
-                'Site-specific inspection checklist attachments',
-              ]}
-            />
+            <SitesListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/sites/new"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <CreateSitePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/sites/:id"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <SiteDetailsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/sites/:id/edit"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <EditSitePage />
           </ProtectedRoute>
         }
       />
@@ -249,18 +283,7 @@ export const AppRoutes: React.FC = () => {
         path="/admin/settings"
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
-            <ModulePlaceholderPage
-              moduleName="Organization Settings"
-              role="ADMIN"
-              icon={Settings}
-              description="Company profile, enterprise branding, security policies, and session configurations."
-              features={[
-                'Organization profile and branding customization',
-                'Security policy & password complexity rules',
-                'Session timeout and JWT expiration policies',
-                'Webhook and external ERP integrations',
-              ]}
-            />
+            <OrganizationSettingsPage />
           </ProtectedRoute>
         }
       />

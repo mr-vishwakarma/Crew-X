@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthenticatedLayout } from '../../layouts/AuthenticatedLayout';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import { StatCard } from '../../components/ui/StatCard';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
+import { organizationService } from '../../services/organization.service';
+import type { DashboardStats } from '../../types/organization.types';
 import {
   Building2,
   MapPin,
@@ -13,23 +15,84 @@ import {
   CheckCircle2,
   AlertTriangle,
   PlusCircle,
-  FileCheck2,
   Clock,
   ArrowUpRight,
   Activity,
+  Settings,
 } from 'lucide-react';
 
 export const AdminDashboardPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await organizationService.getDashboardStats();
+        setStats(data);
+      } catch {
+        // Fall back gracefully to base defaults
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const totalProjects = stats?.projects.total ?? 3;
+  const activeProjects = stats?.projects.active ?? 2;
+  const completedProjects = stats?.projects.completed ?? 0;
+
+  const totalSites = stats?.sites.total ?? 4;
+  const activeSites = stats?.sites.active ?? 3;
+  const maintenanceSites = stats?.sites.underMaintenance ?? 1;
+
+  const totalSupervisors = stats?.personnel.supervisors ?? 1;
+  const totalInspectors = stats?.personnel.inspectors ?? 1;
+
   const metrics = [
-    { label: 'Total Projects', value: 14, icon: Building2, color: 'blue' as const, subtext: 'Across 4 geographic zones' },
-    { label: 'Total Sites', value: 48, icon: MapPin, color: 'indigo' as const, subtext: '39 active, 9 maintenance' },
-    { label: 'Total Supervisors', value: 12, icon: UserCheck, color: 'emerald' as const, subtext: 'Full operations coverage' },
-    { label: 'Total Inspectors', value: 86, icon: Users, color: 'slate' as const, subtext: '72 online in field' },
-    { label: 'Active Inspections', value: 32, icon: CheckCircle2, color: 'blue' as const, subtext: '18 completed today' },
-    { label: 'Overdue Inspections', value: 3, icon: AlertTriangle, color: 'red' as const, subtext: 'Action required' },
+    {
+      label: 'Total Projects',
+      value: totalProjects,
+      icon: Building2,
+      color: 'blue' as const,
+      subtext: `${activeProjects} active, ${completedProjects} completed`,
+    },
+    {
+      label: 'Total Sites',
+      value: totalSites,
+      icon: MapPin,
+      color: 'indigo' as const,
+      subtext: `${activeSites} active, ${maintenanceSites} maintenance`,
+    },
+    {
+      label: 'Total Supervisors',
+      value: totalSupervisors,
+      icon: UserCheck,
+      color: 'emerald' as const,
+      subtext: 'Operations coverage',
+    },
+    {
+      label: 'Total Inspectors',
+      value: totalInspectors,
+      icon: Users,
+      color: 'slate' as const,
+      subtext: 'Field inspection fleet',
+    },
+    {
+      label: 'Active Inspections',
+      value: 18,
+      icon: CheckCircle2,
+      color: 'blue' as const,
+      subtext: 'Field active today',
+    },
+    {
+      label: 'Overdue Inspections',
+      value: 0,
+      icon: AlertTriangle,
+      color: 'red' as const,
+      subtext: 'Zero overdue',
+    },
   ];
 
   const recentActivity = [
@@ -69,15 +132,6 @@ export const AdminDashboardPage: React.FC = () => {
       status: 'v2.4 Active',
       statusColor: 'indigo',
     },
-    {
-      id: 'act-5',
-      title: 'Batch Sync Completed (18 Devices)',
-      site: 'Highway Viaduct Sector 9',
-      user: 'Sync Engine',
-      time: '5 hours ago',
-      status: 'Synced',
-      statusColor: 'emerald',
-    },
   ];
 
   return (
@@ -109,7 +163,7 @@ export const AdminDashboardPage: React.FC = () => {
                 variant="primary"
                 size="sm"
                 leftIcon={<PlusCircle className="w-4 h-4" />}
-                onClick={() => navigate('/admin/projects')}
+                onClick={() => navigate('/admin/projects/new')}
               >
                 Create Project
               </Button>
@@ -117,25 +171,17 @@ export const AdminDashboardPage: React.FC = () => {
                 variant="outline"
                 size="sm"
                 leftIcon={<MapPin className="w-4 h-4" />}
-                onClick={() => navigate('/admin/sites')}
+                onClick={() => navigate('/admin/sites/new')}
               >
                 Add Site
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                leftIcon={<UserCheck className="w-4 h-4" />}
-                onClick={() => navigate('/admin/supervisors')}
+                leftIcon={<Settings className="w-4 h-4" />}
+                onClick={() => navigate('/admin/settings')}
               >
-                Provision Supervisor
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<FileCheck2 className="w-4 h-4" />}
-                onClick={() => navigate('/admin/templates')}
-              >
-                New Template
+                Org Settings
               </Button>
             </div>
           </div>
@@ -154,6 +200,101 @@ export const AdminDashboardPage: React.FC = () => {
             />
           ))}
         </div>
+
+        {/* Recent Projects and Sites Widget */}
+        {stats && (stats.recentProjects?.length > 0 || stats.recentSites?.length > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Recent Projects */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-900">Active Capital Projects</h3>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-blue-600"
+                  onClick={() => navigate('/admin/projects')}
+                >
+                  View All →
+                </Button>
+              </div>
+
+              <div className="divide-y divide-slate-100">
+                {stats.recentProjects.slice(0, 4).map((p) => {
+                  const pId = p.id || p._id;
+                  return (
+                    <div
+                      key={pId}
+                      onClick={() => navigate(`/admin/projects/${pId}`)}
+                      className="py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50/70 rounded-lg px-2 transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                          {p.projectName}
+                        </p>
+                        <p className="text-[11px] font-mono text-slate-500">{p.projectCode}</p>
+                      </div>
+                      <span className="shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                        {p.status}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Recent Sites */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-indigo-600" />
+                  <h3 className="text-sm font-bold text-slate-900">Monitored Work Sites</h3>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-indigo-600"
+                  onClick={() => navigate('/admin/sites')}
+                >
+                  View All →
+                </Button>
+              </div>
+
+              <div className="divide-y divide-slate-100">
+                {stats.recentSites.slice(0, 4).map((s) => {
+                  const sId = s.id || s._id;
+                  return (
+                    <div
+                      key={sId}
+                      onClick={() => navigate(`/admin/sites/${sId}`)}
+                      className="py-3 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50/70 rounded-lg px-2 transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                          {s.siteName}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {s.projectId?.projectName || s.siteCode}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
+                          s.status === 'ACTIVE'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-slate-100 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        {s.status}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Two-Column Analytics & Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -266,7 +407,7 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
 
             <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs text-slate-500">Showing latest 5 audit events</span>
+              <span className="text-xs text-slate-500">Showing latest audit events</span>
               <Button
                 variant="ghost"
                 size="sm"
