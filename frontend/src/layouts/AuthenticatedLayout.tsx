@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../features/auth/hooks/useAuth';
-import { getNavItemsForRole } from '../routes/navigationConfig';
+import { getNavGroupsForRole } from '../routes/navigationConfig';
 import { Sidebar } from '../components/navigation/Sidebar';
 import { Header } from '../components/navigation/Header';
 import { MobileDrawer } from '../components/navigation/MobileDrawer';
@@ -25,7 +25,7 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
   });
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
 
-  const navItems = getNavItemsForRole(user?.role);
+  const navGroups = getNavGroupsForRole(user?.role);
   const isInspector = user?.role === 'INSPECTOR';
 
   // Toggle and persist desktop sidebar collapse state
@@ -55,10 +55,10 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
   }, [isInspector]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-row w-full overflow-x-hidden">
-      {/* Desktop Collapsible Sidebar */}
+    <div className="min-h-screen bg-[#f4f5f6] flex flex-row w-full overflow-x-hidden">
+      {/* Desktop Persistent Collapsible Sidebar */}
       <Sidebar
-        items={navItems}
+        groups={navGroups}
         isCollapsed={isCollapsed}
         onToggleCollapse={handleToggleCollapse}
       />
@@ -67,7 +67,7 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
       <MobileDrawer
         isOpen={mobileDrawerOpen}
         onClose={() => setMobileDrawerOpen(false)}
-        items={navItems}
+        groups={navGroups}
       />
 
       {/* Main Content Area */}
@@ -79,29 +79,34 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
           showDbIndicator={isInspector}
         />
 
-        <main className={`flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto ${
-          isInspector ? 'pb-24 md:pb-8' : 'pb-8'
-        }`}>
+        <main
+          className={`flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto ${
+            isInspector ? 'pb-24 md:pb-8' : 'pb-8'
+          }`}
+        >
           {children}
         </main>
 
-        <footer className={`border-t border-slate-200/80 bg-white py-4 px-6 text-center text-xs text-slate-500 ${
-          isInspector ? 'mb-16 md:mb-0' : ''
-        }`}>
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-            <span>© {new Date().getFullYear()} Nirikshan Systems. Inspect Smarter. Operate Better.</span>
-            <span className="font-mono text-[11px] text-slate-400">
-              Phase 2 • Dexie.js IndexedDB Active
+        <footer
+          className={`border-t border-slate-200/80 bg-white py-3.5 px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2 ${
+            isInspector ? 'mb-16 md:mb-0' : ''
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#d4f22c] border border-black/20" />
+            <span className="font-medium text-slate-600">
+              Nirikshan Enterprise Platform • Version 3.4
             </span>
           </div>
+          <div>© {new Date().getFullYear()} Nirikshan Inc. All rights reserved.</div>
         </footer>
       </div>
 
-      {/* Inspector Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation for Inspector only */}
       {isInspector && (
         <InspectorBottomNav
-          onOpenDrawer={() => setMobileDrawerOpen(true)}
           pendingSyncCount={pendingSyncCount}
+          onOpenDrawer={() => setMobileDrawerOpen(true)}
         />
       )}
     </div>

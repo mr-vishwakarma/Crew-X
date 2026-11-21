@@ -14,6 +14,7 @@ import {
   Camera,
   UserCircle,
   Home,
+  FileSearch,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { UserRole } from '../types/auth.types';
@@ -24,222 +25,316 @@ export interface NavItem {
   path: string;
   icon: LucideIcon;
   badge?: string | number;
-  badgeColor?: 'blue' | 'amber' | 'emerald' | 'red';
+  badgeTone?: 'lime' | 'amber' | 'blue' | 'rose';
   description?: string;
 }
 
-export const ADMIN_NAV_ITEMS: NavItem[] = [
+export interface NavGroup {
+  groupName: string;
+  items: NavItem[];
+}
+
+export const ADMIN_NAV_GROUPS: NavGroup[] = [
   {
-    id: 'admin-dashboard',
-    label: 'Dashboard',
-    path: '/admin/dashboard',
-    icon: LayoutDashboard,
-    description: 'Executive organization overview and metrics',
+    groupName: 'OVERVIEW',
+    items: [
+      {
+        id: 'admin-dashboard',
+        label: 'Dashboard',
+        path: '/admin/dashboard',
+        icon: LayoutDashboard,
+        description: 'Executive overview, real-time KPI metrics & trends',
+      },
+    ],
   },
   {
-    id: 'admin-projects',
-    label: 'Projects',
-    path: '/admin/projects',
-    icon: Building2,
-    description: 'Manage capital infrastructure and client projects',
+    groupName: 'OPERATIONS',
+    items: [
+      {
+        id: 'admin-projects',
+        label: 'Projects',
+        path: '/admin/projects',
+        icon: Building2,
+        description: 'Manage infrastructure and client project packages',
+      },
+      {
+        id: 'admin-sites',
+        label: 'Sites',
+        path: '/admin/sites',
+        icon: MapPin,
+        description: 'Geofenced facilities and construction site assets',
+      },
+      {
+        id: 'admin-assignments',
+        label: 'Assignments',
+        path: '/admin/assignments',
+        icon: ClipboardList,
+        description: 'Field assignment matrix and supervisor dispatches',
+      },
+      {
+        id: 'admin-inspections',
+        label: 'Inspections',
+        path: '/admin/inspections',
+        icon: CheckCircle2,
+        description: 'Organization-wide audits and verification records',
+      },
+    ],
   },
   {
-    id: 'admin-sites',
-    label: 'Sites',
-    path: '/admin/sites',
-    icon: MapPin,
-    description: 'Manage geographical sites and construction facilities',
+    groupName: 'PEOPLE',
+    items: [
+      {
+        id: 'admin-supervisors',
+        label: 'Supervisors',
+        path: '/admin/supervisors',
+        icon: UserCheck,
+        description: 'Field operations supervisors roster and jurisdiction',
+      },
+      {
+        id: 'admin-inspectors',
+        label: 'Inspectors',
+        path: '/admin/inspectors',
+        icon: Users,
+        description: 'Field inspection workforce credentials and certs',
+      },
+    ],
   },
   {
-    id: 'admin-supervisors',
-    label: 'Supervisors',
-    path: '/admin/supervisors',
-    icon: UserCheck,
-    description: 'Provision and assign operations supervisors',
+    groupName: 'COMPLIANCE',
+    items: [
+      {
+        id: 'admin-templates',
+        label: 'Checklist Templates',
+        path: '/admin/templates',
+        icon: FileCheck2,
+        description: 'Standardized ISO-9001 and OSHA safety checklist forms',
+      },
+      {
+        id: 'admin-reports',
+        label: 'Reports',
+        path: '/admin/reports',
+        icon: BarChart3,
+        description: 'Audit trails, executive analytics and compliance exports',
+      },
+    ],
   },
   {
-    id: 'admin-inspectors',
-    label: 'Inspectors',
-    path: '/admin/inspectors',
-    icon: Users,
-    description: 'Manage field inspection personnel across organization',
-  },
-  {
-    id: 'admin-assignments',
-    label: 'Assignments',
-    path: '/admin/assignments',
-    icon: ClipboardList,
-    description: 'Work order and site delegation schedules',
-  },
-  {
-    id: 'admin-templates',
-    label: 'Checklist Templates',
-    path: '/admin/templates',
-    icon: FileCheck2,
-    description: 'Design standard operating procedure audit checklists',
-  },
-  {
-    id: 'admin-inspections',
-    label: 'Inspections',
-    path: '/admin/inspections',
-    icon: CheckCircle2,
-    description: 'Organization-wide inspection audits and records',
-  },
-  {
-    id: 'admin-reports',
-    label: 'Reports',
-    path: '/admin/reports',
-    icon: BarChart3,
-    description: 'Compliance metrics, executive analytics & exports',
-  },
-  {
-    id: 'admin-sync',
-    label: 'Sync Monitoring',
-    path: '/admin/sync',
-    icon: RefreshCw,
-    description: 'Offline sync queues and device connectivity health',
-  },
-  {
-    id: 'admin-settings',
-    label: 'Organization Settings',
-    path: '/admin/settings',
-    icon: Settings,
-    description: 'Company profile, security policies & preferences',
+    groupName: 'SYSTEM',
+    items: [
+      {
+        id: 'admin-sync',
+        label: 'Sync Monitoring',
+        path: '/admin/sync',
+        icon: RefreshCw,
+        description: 'Device sync telemetry, offline logs and queue health',
+      },
+      {
+        id: 'admin-settings',
+        label: 'Organization Settings',
+        path: '/admin/settings',
+        icon: Settings,
+        description: 'Company profile, geofence radius & security policies',
+      },
+    ],
   },
 ];
 
-export const SUPERVISOR_NAV_ITEMS: NavItem[] = [
+export const SUPERVISOR_NAV_GROUPS: NavGroup[] = [
   {
-    id: 'sup-dashboard',
-    label: 'Dashboard',
-    path: '/supervisor/dashboard',
-    icon: LayoutDashboard,
-    description: 'Operations overview for assigned project scope',
+    groupName: 'OVERVIEW',
+    items: [
+      {
+        id: 'sup-dashboard',
+        label: 'Dashboard',
+        path: '/supervisor/dashboard',
+        icon: LayoutDashboard,
+        description: 'Operational command for authorized project scope',
+      },
+    ],
   },
   {
-    id: 'sup-projects',
-    label: 'My Projects',
-    path: '/supervisor/projects',
-    icon: Building2,
-    description: 'View and manage authorized project sites',
+    groupName: 'PROJECT OPERATIONS',
+    items: [
+      {
+        id: 'sup-projects',
+        label: 'My Projects',
+        path: '/supervisor/projects',
+        icon: Building2,
+        description: 'Assigned construction projects and packages',
+      },
+      {
+        id: 'sup-sites',
+        label: 'Sites',
+        path: '/supervisor/sites',
+        icon: MapPin,
+        description: 'Zone access points, chainages and work areas',
+      },
+      {
+        id: 'sup-inspectors',
+        label: 'Inspectors',
+        path: '/supervisor/inspectors',
+        icon: Users,
+        description: 'Field inspection crew roster within project scope',
+      },
+      {
+        id: 'sup-assignments',
+        label: 'Assignments',
+        path: '/supervisor/assignments',
+        icon: ClipboardList,
+        description: 'Dispatch daily work packages to inspectors',
+      },
+      {
+        id: 'sup-inspections',
+        label: 'Inspections',
+        path: '/supervisor/inspections',
+        icon: CheckCircle2,
+        description: 'Active site inspections in progress',
+      },
+    ],
   },
   {
-    id: 'sup-sites',
-    label: 'Sites',
-    path: '/supervisor/sites',
-    icon: MapPin,
-    description: 'Facility access points and field zones',
+    groupName: 'QUALITY AND REVIEW',
+    items: [
+      {
+        id: 'sup-review-queue',
+        label: 'Review Queue',
+        path: '/supervisor/reports',
+        icon: FileSearch,
+        badge: '4',
+        badgeTone: 'lime',
+        description: 'Submitted field audits awaiting QA sign-off',
+      },
+      {
+        id: 'sup-conflicts',
+        label: 'Conflict Resolution',
+        path: '/supervisor/conflicts',
+        icon: AlertTriangle,
+        description: 'Resolve variance disputes and data anomalies',
+      },
+      {
+        id: 'sup-reports',
+        label: 'Reports',
+        path: '/supervisor/reports',
+        icon: BarChart3,
+        description: 'Field compliance logs and contractor punch lists',
+      },
+    ],
   },
   {
-    id: 'sup-inspectors',
-    label: 'Inspectors',
-    path: '/supervisor/inspectors',
-    icon: Users,
-    description: 'Roster of field inspectors within your team',
-  },
-  {
-    id: 'sup-assignments',
-    label: 'Assignments',
-    path: '/supervisor/assignments',
-    icon: ClipboardList,
-    description: 'Assign inspection work orders to team inspectors',
-  },
-  {
-    id: 'sup-inspections',
-    label: 'Inspections',
-    path: '/supervisor/inspections',
-    icon: CheckCircle2,
-    description: 'Monitor ongoing site inspections and progress',
-  },
-  {
-    id: 'sup-conflicts',
-    label: 'Conflict Resolution',
-    path: '/supervisor/conflicts',
-    icon: AlertTriangle,
-    badge: '0',
-    badgeColor: 'amber',
-    description: 'Resolve synchronization clashes and flagged anomalies',
-  },
-  {
-    id: 'sup-reports',
-    label: 'Reports',
-    path: '/supervisor/reports',
-    icon: BarChart3,
-    description: 'Review field audit submissions and QA approvals',
-  },
-  {
-    id: 'sup-sync',
-    label: 'Sync Monitoring',
-    path: '/supervisor/sync',
-    icon: RefreshCw,
-    description: 'Field device queue status and sync anomalies',
+    groupName: 'SYSTEM',
+    items: [
+      {
+        id: 'sup-sync',
+        label: 'Sync Monitoring',
+        path: '/supervisor/sync',
+        icon: RefreshCw,
+        description: 'Field device queue status and offline health',
+      },
+      {
+        id: 'sup-profile',
+        label: 'Profile & Settings',
+        path: '/supervisor/profile',
+        icon: UserCircle,
+        description: 'Supervisor credentials and notification rules',
+      },
+    ],
   },
 ];
 
-export const INSPECTOR_NAV_ITEMS: NavItem[] = [
+export const INSPECTOR_NAV_GROUPS: NavGroup[] = [
   {
-    id: 'insp-home',
-    label: 'Home',
-    path: '/inspector/dashboard',
-    icon: Home,
-    description: 'Field inspection portal and quick tasks',
+    groupName: 'OVERVIEW',
+    items: [
+      {
+        id: 'insp-home',
+        label: 'Home',
+        path: '/inspector/dashboard',
+        icon: Home,
+        description: 'Field inspection portal and immediate tasks',
+      },
+    ],
   },
   {
-    id: 'insp-inspections',
-    label: 'My Inspections',
-    path: '/inspector/inspections',
-    icon: ClipboardList,
-    description: 'Scheduled, active, and completed audit assignments',
+    groupName: 'FIELD OPERATIONS',
+    items: [
+      {
+        id: 'insp-inspections',
+        label: 'My Inspections',
+        path: '/inspector/inspections',
+        icon: ClipboardList,
+        badge: '3',
+        badgeTone: 'lime',
+        description: 'Scheduled, active, and completed audit assignments',
+      },
+      {
+        id: 'insp-checklist',
+        label: 'Checklists',
+        path: '/inspector/checklist',
+        icon: FileCheck2,
+        description: 'Offline-ready inspection checklist forms',
+      },
+      {
+        id: 'insp-evidence',
+        label: 'Evidence',
+        path: '/inspector/evidence',
+        icon: Camera,
+        description: 'GPS-tagged field photos and defect markups',
+      },
+    ],
   },
   {
-    id: 'insp-checklist',
-    label: 'Checklist',
-    path: '/inspector/checklist',
-    icon: FileCheck2,
-    description: 'Active offline inspection checklist forms',
+    groupName: 'OFFLINE WORK',
+    items: [
+      {
+        id: 'insp-sync',
+        label: 'Sync Centre',
+        path: '/inspector/sync',
+        icon: RefreshCw,
+        description: 'Local IndexedDB storage and cloud sync queue',
+      },
+    ],
   },
   {
-    id: 'insp-evidence',
-    label: 'Evidence',
-    path: '/inspector/evidence',
-    icon: Camera,
-    description: 'GPS-tagged field photos and audio observations',
-  },
-  {
-    id: 'insp-sync',
-    label: 'Sync Centre',
-    path: '/inspector/sync',
-    icon: RefreshCw,
-    description: 'Local IndexedDB storage and cloud sync status',
-  },
-  {
-    id: 'insp-reports',
-    label: 'Reports',
-    path: '/inspector/reports',
-    icon: BarChart3,
-    description: 'Personal inspection audit trail and submitted logs',
-  },
-  {
-    id: 'insp-profile',
-    label: 'Profile',
-    path: '/inspector/profile',
-    icon: UserCircle,
-    description: 'Inspector credentials and field certification info',
+    groupName: 'MY RECORDS',
+    items: [
+      {
+        id: 'insp-reports',
+        label: 'Reports',
+        path: '/inspector/reports',
+        icon: BarChart3,
+        description: 'Personal audit trail and historical logs',
+      },
+      {
+        id: 'insp-profile',
+        label: 'Profile',
+        path: '/inspector/profile',
+        icon: UserCircle,
+        description: 'Inspector credentials and field certification',
+      },
+    ],
   },
 ];
 
 /**
- * Returns navigation items for the given user role
+ * Returns grouped navigation for the given user role
  */
-export const getNavItemsForRole = (role?: UserRole): NavItem[] => {
+export const getNavGroupsForRole = (role?: UserRole): NavGroup[] => {
   switch (role) {
     case 'ADMIN':
-      return ADMIN_NAV_ITEMS;
+      return ADMIN_NAV_GROUPS;
     case 'SUPERVISOR':
-      return SUPERVISOR_NAV_ITEMS;
+      return SUPERVISOR_NAV_GROUPS;
     case 'INSPECTOR':
-      return INSPECTOR_NAV_ITEMS;
+      return INSPECTOR_NAV_GROUPS;
     default:
       return [];
   }
+};
+
+/**
+ * Backwards compatibility helper returning flat list of items
+ */
+export const getNavItemsForRole = (role?: UserRole): NavItem[] => {
+  const groups = getNavGroupsForRole(role);
+  return groups.flatMap((g) => g.items);
 };

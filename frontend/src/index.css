@@ -2,13 +2,43 @@
 
 @layer base {
   :root {
-    --color-primary-navy: #0f172a;
-    --color-action-blue: #2563eb;
+    --bg-canvas: #f4f5f6;
+    --bg-surface: #ffffff;
+    --sidebar-bg: #12141a;
+    --sidebar-border: #1e222d;
+    --sidebar-text: #94a3b8;
+    --sidebar-active: #ffffff;
+    --accent-lime: #d4f22c;
+    --accent-lime-hover: #c6e61f;
+    --accent-lime-fg: #12141a;
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+    --border-subtle: #e2e8f0;
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 antialiased font-sans;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom subtle scrollbar for sidebar and cards */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.4);
   }
 }
