@@ -10,13 +10,51 @@ import { notFoundHandler, errorHandler } from './middleware/error.middleware.js'
 export const createApp = (): Express => {
   const app = express();
 
-  // Security HTTP headers
-  app.use(helmet());
+  // Trust first proxy (required for secure cookies behind reverse proxies like Vercel/Render)
+  app.set('trust proxy', 1);
 
-  // CORS configuration
+  // Security HTTP headers
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    })
+  );
+
+  // Collect allowed origins from env and defaults
+  const envOrigins = (process.env.FRONTEND_URL || '')
+    .split(',')
+    .map((u) => u.trim().replace(/\/$/, ''))
+    .filter(Boolean);
+
+  const defaultOrigins = [
+    'https://nirikshanx.vercel.app',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+  ];
+
+  const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
+
+  // CORS configuration supporting vercel.app domains & multi-frontend URLs
   app.use(
     cors({
-      origin: [env.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+      origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, Postman, server-to-server)
+        if (!origin) return callback(null, true);
+
+        const cleanOrigin = origin.replace(/\/$/, '');
+        if (
+          allowedOrigins.includes(cleanOrigin) ||
+          cleanOrigin.endsWith('.vercel.app') ||
+          cleanOrigin.includes('localhost') ||
+          cleanOrigin.includes('127.0.0.1')
+        ) {
+          return callback(null, true);
+        }
+
+        console.warn(`[CORS Blocked] Origin not allowed: ${origin}`);
+        return callback(new Error(`CORS blocked for origin: ${origin}`));
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

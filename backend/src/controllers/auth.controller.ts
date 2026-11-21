@@ -15,10 +15,11 @@ export class AuthController {
       const { user, token } = await AuthService.login(email, password);
 
       // Set secure HTTP-only cookie
+      // In production across domains (e.g. Vercel -> Backend), SameSite MUST be 'none' and Secure MUST be true
       res.cookie(env.COOKIE_NAME, token, {
         httpOnly: true,
         secure: env.isProduction,
-        sameSite: env.isProduction ? 'strict' : 'lax',
+        sameSite: env.isProduction ? 'none' : 'lax',
         maxAge: env.COOKIE_MAX_AGE_MS,
         path: '/',
       });
@@ -46,7 +47,7 @@ export class AuthController {
     res.clearCookie(env.COOKIE_NAME, {
       httpOnly: true,
       secure: env.isProduction,
-      sameSite: env.isProduction ? 'strict' : 'lax',
+      sameSite: env.isProduction ? 'none' : 'lax',
       path: '/',
     });
 
