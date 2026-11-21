@@ -78,8 +78,9 @@ export const createApp = (): Express => {
     app.use(morgan(env.isProduction ? 'combined' : 'dev'));
   }
 
-  // API Routes
+  // API Routes - mounted on both /api and root / for universal compatibility
   app.use('/api', routes);
+  app.use('/', routes);
 
   // 404 Handler
   app.use(notFoundHandler);

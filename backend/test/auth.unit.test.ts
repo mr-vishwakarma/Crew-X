@@ -133,7 +133,25 @@ async function runUnitTests() {
     console.assert(typeof healthJson.database.readyState === 'number', 'readyState should be reported');
     console.log('   ✔ Health endpoint successfully queried without revealing credentials\n');
 
-    // Test 6: 404 handler
+    // Test 6: Verify route reachability for both /auth/login and /api/auth/login
+    const rootLoginRes = await fetch(`${baseUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: '', password: '' }),
+    });
+    // Should return 400 validation error (meaning endpoint exists!), NOT 404
+    console.assert(rootLoginRes.status === 400, 'POST /auth/login must be reached and return 400 for empty body');
+    console.log('   ✔ POST /auth/login successfully reached (root prefix supported)');
+
+    const apiLoginRes = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: '', password: '' }),
+    });
+    console.assert(apiLoginRes.status === 400, 'POST /api/auth/login must be reached and return 400 for empty body');
+    console.log('   ✔ POST /api/auth/login successfully reached (/api prefix supported)\n');
+
+    // Test 7: 404 handler
     const notFoundRes = await fetch(`${baseUrl}/api/non-existent-route`);
     console.assert(notFoundRes.status === 404, 'Non-existent route should return 404');
     const notFoundJson = await notFoundRes.json();

@@ -1,6 +1,15 @@
 import axios, { AxiosError } from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// Ensure base URL properly resolves whether configured with or without trailing /api
+const getApiBaseUrl = (): string => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (!envUrl) return '/api';
+
+  const trimmed = envUrl.trim().replace(/\/$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+};
+
+const API_BASE = getApiBaseUrl();
 
 export const apiClient = axios.create({
   baseURL: API_BASE,
