@@ -36,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between">
+      <header className="sticky top-0 z-20 shrink-0 h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between">
         {/* Left: Mobile Trigger & Context Header */}
         <div className="flex items-center gap-3">
           <button

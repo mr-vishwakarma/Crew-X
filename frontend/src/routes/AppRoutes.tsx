@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicOnlyRoute } from './PublicOnlyRoute';
 import { LoginPage } from '../pages/auth/LoginPage';
@@ -53,6 +53,7 @@ export const AppRoutes: React.FC = () => {
       {/* =========================================================
           ADMINISTRATOR ROUTES (11 total navigation destinations)
           ========================================================= */}
+      <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
       <Route
         path="/admin/dashboard"
         element={
@@ -268,8 +269,9 @@ export const AppRoutes: React.FC = () => {
       />
 
       {/* =========================================================
-          SUPERVISOR ROUTES (9 total navigation destinations)
+          SUPERVISOR ROUTES (10 total navigation destinations)
           ========================================================= */}
+      <Route path="/supervisor" element={<Navigate to="/supervisor/dashboard" replace />} />
       <Route
         path="/supervisor/dashboard"
         element={
@@ -430,10 +432,30 @@ export const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/supervisor/profile"
+        element={
+          <ProtectedRoute allowedRoles={['SUPERVISOR']}>
+            <ModulePlaceholderPage
+              moduleName="Supervisor Profile & Settings"
+              role="SUPERVISOR"
+              icon={UserCircle}
+              description="View your supervisor credentials, authorized project scopes, and security settings."
+              features={[
+                'Operational supervisor credential details',
+                'Authorized project and site jurisdictions',
+                'Activity audit logs and approval history',
+                'Security policies and notification preferences',
+              ]}
+            />
+          </ProtectedRoute>
+        }
+      />
 
       {/* =========================================================
           INSPECTOR ROUTES (7 total navigation destinations)
           ========================================================= */}
+      <Route path="/inspector" element={<Navigate to="/inspector/dashboard" replace />} />
       <Route
         path="/inspector/dashboard"
         element={

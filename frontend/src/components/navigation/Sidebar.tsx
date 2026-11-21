@@ -15,12 +15,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ groups, isCollapsed, onToggleC
 
   return (
     <aside
-      className={`hidden md:flex flex-col bg-[#12141a] text-slate-300 border-r border-[#1e222d] transition-all duration-300 ease-in-out shrink-0 select-none z-30 sticky top-0 h-screen ${
+      className={`hidden md:flex flex-col bg-[#12141a] text-slate-300 border-r border-[#1e222d] transition-[width] duration-300 ease-in-out shrink-0 select-none z-30 h-full overflow-hidden ${
         isCollapsed ? 'w-20' : 'w-64'
       }`}
+      aria-label="Sidebar navigation"
     >
       {/* Brand Header */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-[#1e222d]">
+      <div className="h-16 shrink-0 flex items-center justify-between px-4 border-b border-[#1e222d]">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="h-9 w-9 rounded-xl overflow-hidden bg-black shadow-md ring-1 ring-amber-500/30 flex items-center justify-center p-0.5 shrink-0">
             <img src="/logo.jpg" alt="Nirikshan Logo" className="h-full w-full object-contain" />
@@ -52,7 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ groups, isCollapsed, onToggleC
 
       {/* Role Context Pill */}
       {!isCollapsed && user && (
-        <div className="px-4 py-2.5 bg-[#161922] border-b border-[#1e222d] flex items-center justify-between">
+        <div className="shrink-0 px-4 py-2.5 bg-[#161922] border-b border-[#1e222d] flex items-center justify-between">
           <div className="overflow-hidden">
             <p className="text-[11px] font-bold text-white truncate">{user.fullName}</p>
             <p className="text-[10px] text-slate-400 truncate">{user.organizationId}</p>
@@ -64,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ groups, isCollapsed, onToggleC
       )}
 
       {/* Navigation List with Categorized Groups */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin">
+      <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin sidebar-scroll">
         {groups.map((group) => (
           <div key={group.groupName} className="space-y-1">
             {!isCollapsed && (
@@ -117,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ groups, isCollapsed, onToggleC
       </nav>
 
       {/* Sidebar Footer with Logout */}
-      <div className="p-3 border-t border-[#1e222d] bg-[#12141a]">
+      <div className="shrink-0 p-3 border-t border-[#1e222d] bg-[#12141a]">
         <button
           type="button"
           onClick={() => logout()}

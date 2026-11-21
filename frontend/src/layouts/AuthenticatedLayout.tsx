@@ -55,8 +55,8 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
   }, [isInspector]);
 
   return (
-    <div className="min-h-screen bg-[#f4f5f6] flex flex-row w-full overflow-x-hidden">
-      {/* Desktop Persistent Collapsible Sidebar */}
+    <div className="h-screen h-[100dvh] w-full flex flex-row overflow-hidden bg-[#f4f5f6]">
+      {/* Desktop Persistent Collapsible Sidebar - Strictly Fixed & Stationary */}
       <Sidebar
         groups={navGroups}
         isCollapsed={isCollapsed}
@@ -70,8 +70,11 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
         groups={navGroups}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Right Content Area - Independently Scrollable Container */}
+      <div
+        id="main-content-scroll"
+        className="flex-1 flex flex-col min-w-0 min-h-0 h-full overflow-y-auto overflow-x-hidden relative"
+      >
         <Header
           onToggleMobileDrawer={() => setMobileDrawerOpen(true)}
           title={title}
@@ -88,7 +91,7 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
         </main>
 
         <footer
-          className={`border-t border-slate-200/80 bg-white py-3.5 px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2 ${
+          className={`shrink-0 border-t border-slate-200/80 bg-white py-3.5 px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2 ${
             isInspector ? 'mb-16 md:mb-0' : ''
           }`}
         >

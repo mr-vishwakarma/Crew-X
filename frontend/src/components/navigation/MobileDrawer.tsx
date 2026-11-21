@@ -42,16 +42,16 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, gro
       {/* Drawer panel */}
       <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#12141a] text-slate-300 shadow-2xl z-10 animate-in slide-in-from-left duration-200">
         {/* Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-[#1e222d]">
+        <div className="h-16 shrink-0 flex items-center justify-between px-4 border-b border-[#1e222d]">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl overflow-hidden bg-black shadow-md ring-1 ring-amber-500/30 flex items-center justify-center p-0.5">
+            <div className="h-9 w-9 rounded-xl overflow-hidden bg-black shadow-md ring-1 ring-amber-500/30 flex items-center justify-center p-0.5 shrink-0">
               <img src="/logo.jpg" alt="Nirikshan" className="h-full w-full object-contain" />
             </div>
-            <div>
-              <span className="font-extrabold text-sm tracking-tight text-white block">
+            <div className="overflow-hidden">
+              <span className="font-extrabold text-sm tracking-tight text-white block truncate">
                 NIRIKSHAN
               </span>
-              <span className="text-[10px] text-slate-400 font-medium block">
+              <span className="text-[10px] text-slate-400 font-medium block truncate">
                 Field Inspection & Compliance
               </span>
             </div>
@@ -60,7 +60,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, gro
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
             aria-label="Close menu"
           >
             <X className="w-5 h-5" />
@@ -69,7 +69,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, gro
 
         {/* Role info */}
         {user && (
-          <div className="px-4 py-2.5 bg-[#161922] border-b border-[#1e222d] flex items-center justify-between">
+          <div className="shrink-0 px-4 py-2.5 bg-[#161922] border-b border-[#1e222d] flex items-center justify-between">
             <div className="overflow-hidden">
               <p className="text-xs font-bold text-white truncate">{user.fullName}</p>
               <p className="text-[10px] text-slate-400 truncate">{user.organizationId}</p>
@@ -81,7 +81,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, gro
         )}
 
         {/* Categorized Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5 scrollbar-thin">
+        <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-5 scrollbar-thin sidebar-scroll">
           {groups.map((group) => (
             <div key={group.groupName} className="space-y-1">
               <div className="px-3 pb-1 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
@@ -118,7 +118,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, gro
         </nav>
 
         {/* Footer Logout */}
-        <div className="p-3 border-t border-[#1e222d] bg-[#12141a]">
+        <div className="shrink-0 p-3 border-t border-[#1e222d] bg-[#12141a]">
           <button
             type="button"
             onClick={() => {

@@ -41,4 +41,12 @@
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(148, 163, 184, 0.4);
   }
+
+  /* Dark sidebar scrollbar */
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
 }
