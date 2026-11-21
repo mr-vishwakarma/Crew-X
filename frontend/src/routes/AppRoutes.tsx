@@ -1,9 +1,9 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '../features/auth/hooks/useAuth';
+import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicOnlyRoute } from './PublicOnlyRoute';
 import { LoginPage } from '../pages/auth/LoginPage';
+import { LandingPage } from '../pages/LandingPage';
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { ProjectsListPage } from '../pages/admin/projects/ProjectsListPage';
 import { CreateProjectPage } from '../pages/admin/projects/CreateProjectPage';
@@ -19,7 +19,6 @@ import { InspectorDashboardPage } from '../pages/inspector/InspectorDashboardPag
 import { ModulePlaceholderPage } from '../pages/common/ModulePlaceholderPage';
 import { UnauthorizedPage } from '../pages/UnauthorizedPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
-import { LoadingScreen } from '../components/common/LoadingScreen';
 import {
   Building2,
   MapPin,
@@ -35,31 +34,11 @@ import {
   UserCircle,
 } from 'lucide-react';
 
-const RootRedirect: React.FC = () => {
-  const { isAuthenticated, user, isInitialized } = useAuth();
-
-  if (!isInitialized) {
-    return <LoadingScreen message="Connecting to Nirikshan..." />;
-  }
-
-  if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (user.role === 'ADMIN') {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
-  if (user.role === 'SUPERVISOR') {
-    return <Navigate to="/supervisor/dashboard" replace />;
-  }
-  return <Navigate to="/inspector/dashboard" replace />;
-};
-
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Root redirect */}
-      <Route path="/" element={<RootRedirect />} />
+      {/* Landing Page */}
+      <Route path="/" element={<LandingPage />} />
 
       {/* Public Login Route */}
       <Route
