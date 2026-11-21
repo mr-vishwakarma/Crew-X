@@ -4,10 +4,12 @@ import { AuthenticatedLayout } from '../../layouts/AuthenticatedLayout';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import { Button } from '../../components/ui/Button';
 import { dashboardService } from '../../services/dashboard.service';
+import { assignmentService } from '../../services/assignment.service';
 import type {
   SupervisorSummaryData,
   ReviewQueueItem,
 } from '../../services/dashboard.service';
+import type { SupervisorProject } from '../../types/assignment.types';
 import {
   Building2,
   MapPin,
@@ -27,18 +29,25 @@ export const SupervisorDashboardPage: React.FC = () => {
 
   const [summary, setSummary] = useState<SupervisorSummaryData | null>(null);
   const [reviewQueue, setReviewQueue] = useState<ReviewQueueItem[]>([]);
+  const [assignedProjects, setAssignedProjects] = useState<SupervisorProject[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchSupervisorData = async () => {
+      setIsLoading(true);
       try {
-        const [sum, reviews] = await Promise.all([
+        const [sum, reviews, projs] = await Promise.all([
           dashboardService.getSupervisorSummary(),
           dashboardService.getSupervisorReviewQueue(),
+          assignmentService.getSupervisorProjects(),
         ]);
         setSummary(sum);
         setReviewQueue(reviews);
+        setAssignedProjects(projs);
       } catch (err) {
         console.error('Failed to load supervisor dashboard:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -50,44 +59,44 @@ export const SupervisorDashboardPage: React.FC = () => {
     {
       id: 'sup-kpi-1',
       label: 'Assigned Projects',
-      value: summary?.assignedProjectsCount ?? 3,
+      value: summary?.assignedProjectsCount ?? 0,
       trend: 'Scope authorized',
-      isPositive: true,
+      isPositive: (summary?.assignedProjectsCount ?? 0) > 0,
       icon: Building2,
       link: '/supervisor/projects',
     },
     {
       id: 'sup-kpi-2',
       label: 'Managed Sites',
-      value: summary?.managedSitesCount ?? 8,
-      trend: 'All active',
-      isPositive: true,
+      value: summary?.managedSitesCount ?? 0,
+      trend: 'Under assigned projects',
+      isPositive: (summary?.managedSitesCount ?? 0) > 0,
       icon: MapPin,
       link: '/supervisor/sites',
     },
     {
       id: 'sup-kpi-3',
       label: 'Field Inspectors',
-      value: summary?.managedInspectorsCount ?? 16,
-      trend: 'Active roster',
-      isPositive: true,
+      value: summary?.managedInspectorsCount ?? 0,
+      trend: 'Assigned on sites',
+      isPositive: (summary?.managedInspectorsCount ?? 0) > 0,
       icon: Users,
-      link: '/supervisor/inspectors',
+      link: '/supervisor/sites',
     },
     {
       id: 'sup-kpi-4',
       label: 'Active Assignments',
-      value: summary?.activeAssignmentsCount ?? 19,
-      trend: 'In progress',
-      isPositive: true,
+      value: summary?.activeAssignmentsCount ?? 0,
+      trend: 'Live site bindings',
+      isPositive: (summary?.activeAssignmentsCount ?? 0) > 0,
       icon: ClipboardList,
-      link: '/supervisor/assignments',
+      link: '/supervisor/sites',
     },
     {
       id: 'sup-kpi-5',
       label: 'Due Today',
-      value: summary?.dueTodayCount ?? 5,
-      trend: 'Scheduled',
+      value: summary?.dueTodayCount ?? 0,
+      trend: 'Scheduled today',
       isPositive: true,
       icon: Clock,
       link: '/supervisor/inspections',
@@ -95,11 +104,11 @@ export const SupervisorDashboardPage: React.FC = () => {
     {
       id: 'sup-kpi-6',
       label: 'Pending Reviews',
-      value: summary?.pendingReviewsCount ?? 4,
+      value: summary?.pendingReviewsCount ?? 0,
       trend: 'Requires QA check',
-      isPositive: false,
+      isPositive: (summary?.pendingReviewsCount ?? 0) === 0,
       icon: FileSearch,
-      isHighlight: true,
+      isHighlight: (summary?.pendingReviewsCount ?? 0) > 0,
       link: '/supervisor/reports',
     },
     {
@@ -107,7 +116,7 @@ export const SupervisorDashboardPage: React.FC = () => {
       label: 'Overdue Audits',
       value: summary?.overdueCount ?? 0,
       trend: summary?.overdueCount === 0 ? 'Zero overdue' : 'Escalation',
-      isPositive: summary?.overdueCount === 0,
+      isPositive: (summary?.overdueCount ?? 0) === 0,
       icon: AlertTriangle,
       link: '/supervisor/inspections',
     },
@@ -115,81 +124,10 @@ export const SupervisorDashboardPage: React.FC = () => {
       id: 'sup-kpi-8',
       label: 'Sync Status',
       value: '100%',
-      trend: 'All devices synced',
+      trend: 'Operational',
       isPositive: true,
       icon: CheckCircle2,
       link: '/supervisor/sync',
-    },
-  ];
-
-  // Assigned Projects & Sites List
-  const assignedProjects = [
-    {
-      id: 'proj-1',
-      name: 'Metro Underground Corridors – Line 4',
-      code: 'METRO-L4',
-      sitesCount: 8,
-      inspectorsCount: 7,
-      progress: 78,
-      compliance: '98.5%',
-    },
-    {
-      id: 'proj-2',
-      name: 'Solar Grid Substation Facilities',
-      code: 'SOLAR-PV',
-      sitesCount: 4,
-      inspectorsCount: 5,
-      progress: 92,
-      compliance: '99.1%',
-    },
-    {
-      id: 'proj-3',
-      name: 'Highway Overpass Structural Reinforcement',
-      code: 'HWY-OVER',
-      sitesCount: 3,
-      inspectorsCount: 4,
-      progress: 45,
-      compliance: '94.0%',
-    },
-  ];
-
-  // Today's Inspection Schedule
-  const todaySchedule = [
-    {
-      id: 'sch-1',
-      inspector: 'Amit Sharma',
-      site: 'Viaduct Section 4B',
-      type: 'Structural Rebar Cover Inspection',
-      time: '11:00 AM',
-      priority: 'HIGH',
-      status: 'IN_PROGRESS',
-    },
-    {
-      id: 'sch-2',
-      inspector: 'Kavita Roy',
-      site: 'Terminal 3 Substation',
-      type: 'Transformer Secondary Grounding Test',
-      time: '1:30 PM',
-      priority: 'CRITICAL',
-      status: 'SCHEDULED',
-    },
-    {
-      id: 'sch-3',
-      inspector: 'Deepak Patel',
-      site: 'Depot Footing Block A',
-      type: 'Concrete Slump & Compression Core Sample',
-      time: '3:30 PM',
-      priority: 'MEDIUM',
-      status: 'SCHEDULED',
-    },
-    {
-      id: 'sch-4',
-      inspector: 'Sunil Nair',
-      site: 'Pier 12 Abutment',
-      type: 'Waterproofing Membrane Verification',
-      time: '5:00 PM',
-      priority: 'MEDIUM',
-      status: 'SCHEDULED',
     },
   ];
 
@@ -208,14 +146,14 @@ export const SupervisorDashboardPage: React.FC = () => {
                   FIELD COMMAND
                 </span>
                 <span className="text-xs text-slate-500 font-medium">
-                  Assigned Project Scope • Quality & Safety QA
+                  Assigned Project Scope • Quality &amp; Safety QA
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 Welcome back, {user?.fullName}!
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
-                You are currently managing 3 active project scopes and 16 field inspectors. Review
+                Managing {summary?.assignedProjectsCount ?? 0} authorized project scopes and {summary?.managedInspectorsCount ?? 0} field inspectors. Review
                 submitted audits, resolve field discrepancies, and allocate today's work orders.
               </p>
             </div>
@@ -226,25 +164,18 @@ export const SupervisorDashboardPage: React.FC = () => {
                 variant="primary"
                 size="sm"
                 leftIcon={<PlusCircle className="w-4 h-4" />}
-                onClick={() => navigate('/supervisor/assignments')}
+                onClick={() => navigate('/supervisor/sites')}
+                className="bg-[#12141a] text-white"
               >
-                Create Assignment
+                Assign Inspector
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                leftIcon={<FileSearch className="w-4 h-4" />}
-                onClick={() => navigate('/supervisor/reports')}
+                leftIcon={<MapPin className="w-4 h-4" />}
+                onClick={() => navigate('/supervisor/sites')}
               >
-                Review Queue ({reviewQueue.length})
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<Users className="w-4 h-4" />}
-                onClick={() => navigate('/supervisor/inspectors')}
-              >
-                Inspectors
+                Project Sites
               </Button>
               <Button
                 variant="outline"
@@ -252,11 +183,28 @@ export const SupervisorDashboardPage: React.FC = () => {
                 leftIcon={<Building2 className="w-4 h-4" />}
                 onClick={() => navigate('/supervisor/projects')}
               >
-                My Projects
+                My Projects ({assignedProjects.length})
               </Button>
             </div>
           </div>
         </div>
+
+        {/* Empty State Banner if no projects assigned */}
+        {!isLoading && assignedProjects.length === 0 && (
+          <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-5 flex items-center gap-4">
+            <div className="h-10 w-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-900">
+                No projects assigned yet. Contact your Administrator.
+              </h3>
+              <p className="text-xs text-amber-700 mt-0.5">
+                An administrator must assign your supervisor account to one or more active projects before you can manage sites and dispatch field inspectors.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* 8 Supervisor KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
@@ -308,22 +256,25 @@ export const SupervisorDashboardPage: React.FC = () => {
           })}
         </div>
 
-        {/* Grid: Review Queue (8 cols) & Today's Schedule (4 cols) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Section D: Review Queue */}
-          <div className="lg:col-span-8 bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <FileSearch className="w-4 h-4 text-slate-900" />
-                <h3 className="text-sm font-bold text-slate-900">
-                  Field Submissions Awaiting Review
-                </h3>
-              </div>
-              <span className="text-xs font-semibold text-slate-500">
-                {reviewQueue.length} Pending QA Approval
-              </span>
+        {/* Section: Review Queue */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <FileSearch className="w-4 h-4 text-slate-900" />
+              <h3 className="text-sm font-bold text-slate-900">
+                Field Submissions Awaiting Review
+              </h3>
             </div>
+            <span className="text-xs font-semibold text-slate-500">
+              {reviewQueue.length} Pending QA Approval
+            </span>
+          </div>
 
+          {reviewQueue.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-500 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+              No pending inspection reviews in your assigned projects.
+            </div>
+          ) : (
             <div className="space-y-3">
               {reviewQueue.map((item) => (
                 <div
@@ -336,11 +287,6 @@ export const SupervisorDashboardPage: React.FC = () => {
                       <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-200 text-slate-700">
                         {item.code}
                       </span>
-                      {item.priority === 'CRITICAL' && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-100 text-rose-700">
-                          CRITICAL
-                        </span>
-                      )}
                     </div>
                     <div className="text-[11px] text-slate-500 flex flex-wrap items-center gap-2">
                       <span>{item.siteName}</span>
@@ -369,53 +315,16 @@ export const SupervisorDashboardPage: React.FC = () => {
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Section C: Today's Inspection Schedule */}
-          <div className="lg:col-span-4 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-                Today's Inspection Schedule
-              </h3>
-              <span className="text-[11px] text-slate-400">{todaySchedule.length} Dispatches</span>
-            </div>
-
-            <div className="space-y-3">
-              {todaySchedule.map((sch) => (
-                <div
-                  key={sch.id}
-                  className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 space-y-1"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900">{sch.inspector}</span>
-                    <span className="text-[10px] font-mono font-bold text-slate-500">
-                      {sch.time}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-slate-600 font-medium truncate">{sch.type}</div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
-                    <span>{sch.site}</span>
-                    <span
-                      className={`font-extrabold ${
-                        sch.priority === 'CRITICAL' ? 'text-rose-600' : 'text-slate-600'
-                      }`}
-                    >
-                      {sch.priority}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Section B: Assigned Projects Overview */}
+        {/* Section: Assigned Projects Overview */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Assigned Project Scope & Progress</h3>
+              <h3 className="text-sm font-bold text-slate-900">Assigned Project Scope &amp; Progress</h3>
               <p className="text-xs text-slate-500">
-                Active capital packages under your operational supervision
+                Active packages under your operational supervision
               </p>
             </div>
             <button
@@ -427,43 +336,37 @@ export const SupervisorDashboardPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {assignedProjects.map((p) => (
-              <div
-                key={p.id}
-                onClick={() => navigate('/supervisor/projects')}
-                className="p-4 rounded-xl border border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-xs transition-all cursor-pointer space-y-3 group"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900 leading-snug">{p.name}</h4>
-                    <span className="text-[10px] text-slate-400 font-mono">Code: {p.code}</span>
+          {assignedProjects.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-500 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+              No projects currently assigned. Please contact your Administrator.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {assignedProjects.map((p) => (
+                <div
+                  key={p.id}
+                  onClick={() => navigate(`/supervisor/sites?projectId=${p.id}`)}
+                  className="p-4 rounded-xl border border-slate-200/80 bg-white hover:border-slate-300 hover:shadow-xs transition-all cursor-pointer space-y-3 group"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 leading-snug group-hover:text-blue-600 transition-colors">
+                        {p.projectName}
+                      </h4>
+                      <span className="text-[10px] text-slate-400 font-mono">Code: {p.projectCode}</span>
+                    </div>
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-700 transition-colors" />
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-700 transition-colors" />
-                </div>
 
-                {/* Progress bar */}
-                <div>
-                  <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-slate-500">Inspection Completion</span>
-                    <span className="font-extrabold text-slate-900">{p.progress}%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      style={{ width: `${p.progress}%` }}
-                      className="h-full bg-[#12141a] rounded-full"
-                    />
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+                    <span>{p.sitesCount} Sites</span>
+                    <span>{p.activeInspectorsCount} Inspectors</span>
+                    <span className="text-emerald-600 font-bold">{p.status}</span>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                  <span>{p.sitesCount} Sites</span>
-                  <span>{p.inspectorsCount} Field Inspectors</span>
-                  <span className="text-emerald-600 font-bold">{p.compliance}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </AuthenticatedLayout>

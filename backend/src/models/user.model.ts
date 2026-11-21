@@ -50,6 +50,16 @@ const userSchema = new Schema<IUserDocument>(
       trim: true,
       index: true,
     },
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    employeeId: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -86,6 +96,8 @@ userSchema.methods.toSanitized = function (): IUserSanitized {
     email: this.email,
     role: this.role,
     organizationId: this.organizationId,
+    phone: this.phone || undefined,
+    employeeId: this.employeeId || undefined,
     isActive: this.isActive,
     createdAt: this.createdAt,
     updatedAt: this.updatedAt,

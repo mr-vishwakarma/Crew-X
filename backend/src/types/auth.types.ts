@@ -9,6 +9,8 @@ export interface IUser {
   passwordHash: string;
   role: UserRole;
   organizationId: string;
+  phone?: string;
+  employeeId?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -20,6 +22,8 @@ export interface IUserSanitized {
   email: string;
   role: UserRole;
   organizationId: string;
+  phone?: string;
+  employeeId?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

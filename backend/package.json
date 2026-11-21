@@ -8,7 +8,7 @@
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "seed": "tsx src/scripts/seed.ts",
-    "test": "tsx test/auth.unit.test.ts && tsx test/phase3.unit.test.ts && tsx test/dashboard.unit.test.ts"
+    "test": "tsx test/auth.unit.test.ts && tsx test/phase3.unit.test.ts && tsx test/dashboard.unit.test.ts && tsx test/assignment.unit.test.ts"
   },
   "keywords": [
     "inspection",

@@ -14,17 +14,19 @@ import { CreateSitePage } from '../pages/admin/sites/CreateSitePage';
 import { SiteDetailsPage } from '../pages/admin/sites/SiteDetailsPage';
 import { EditSitePage } from '../pages/admin/sites/EditSitePage';
 import { OrganizationSettingsPage } from '../pages/admin/organization/OrganizationSettingsPage';
+import { SupervisorsListPage } from '../pages/admin/users/SupervisorsListPage';
+import { InspectorsListPage } from '../pages/admin/users/InspectorsListPage';
+import { AdminAssignmentsPage } from '../pages/admin/assignments/AdminAssignmentsPage';
 import { SupervisorDashboardPage } from '../pages/supervisor/SupervisorDashboardPage';
+import { SupervisorProjectsPage } from '../pages/supervisor/projects/SupervisorProjectsPage';
+import { SupervisorSitesPage } from '../pages/supervisor/sites/SupervisorSitesPage';
 import { InspectorDashboardPage } from '../pages/inspector/InspectorDashboardPage';
+import { InspectorMySitesPage } from '../pages/inspector/sites/InspectorMySitesPage';
+import { InspectorMyInspectionsPage } from '../pages/inspector/inspections/InspectorMyInspectionsPage';
 import { ModulePlaceholderPage } from '../pages/common/ModulePlaceholderPage';
 import { UnauthorizedPage } from '../pages/UnauthorizedPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import {
-  Building2,
-  MapPin,
-  UserCheck,
-  Users,
-  ClipboardList,
   FileCheck2,
   CheckCircle2,
   BarChart3,
@@ -130,18 +132,7 @@ export const AppRoutes: React.FC = () => {
         path="/admin/supervisors"
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
-            <ModulePlaceholderPage
-              moduleName="Supervisors Provisioning"
-              role="ADMIN"
-              icon={UserCheck}
-              description="Create and manage operations supervisors and delegate authorized project scopes."
-              features={[
-                'Role-based supervisor user creation and credential issuance',
-                'Scope boundary assignment to specific projects',
-                'Operational audit oversight and performance metrics',
-                'Account activation and security policy controls',
-              ]}
-            />
+            <SupervisorsListPage />
           </ProtectedRoute>
         }
       />
@@ -149,18 +140,7 @@ export const AppRoutes: React.FC = () => {
         path="/admin/inspectors"
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
-            <ModulePlaceholderPage
-              moduleName="Inspectors Roster"
-              role="ADMIN"
-              icon={Users}
-              description="Organization-wide inspector personnel directory, certifications, and device records."
-              features={[
-                'Personnel credential provisioning',
-                'Field equipment and device binding',
-                'Specialized certification verification (OSHA, ISO, Civil)',
-                'Activity monitoring and offline sync health',
-              ]}
-            />
+            <InspectorsListPage />
           </ProtectedRoute>
         }
       />
@@ -168,18 +148,7 @@ export const AppRoutes: React.FC = () => {
         path="/admin/assignments"
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
-            <ModulePlaceholderPage
-              moduleName="Work Order Assignments"
-              role="ADMIN"
-              icon={ClipboardList}
-              description="Organization-wide inspection schedules, recurring maintenance cycles, and delegation logs."
-              features={[
-                'Automated recurring inspection schedules',
-                'Priority work order generation',
-                'SLA enforcement and deadline escalation triggers',
-                'Multi-project assignment matrices',
-              ]}
-            />
+            <AdminAssignmentsPage />
           </ProtectedRoute>
         }
       />
@@ -284,18 +253,7 @@ export const AppRoutes: React.FC = () => {
         path="/supervisor/projects"
         element={
           <ProtectedRoute allowedRoles={['SUPERVISOR']}>
-            <ModulePlaceholderPage
-              moduleName="My Assigned Projects"
-              role="SUPERVISOR"
-              icon={Building2}
-              description="View progress, milestone status, and team assignments for your authorized project scope."
-              features={[
-                'Restricted project view (authorized scope only)',
-                'Site progress and milestone completion tracking',
-                'Inspector resource allocation per project site',
-                'Project-level safety compliance rates',
-              ]}
-            />
+            <SupervisorProjectsPage />
           </ProtectedRoute>
         }
       />
@@ -303,18 +261,7 @@ export const AppRoutes: React.FC = () => {
         path="/supervisor/sites"
         element={
           <ProtectedRoute allowedRoles={['SUPERVISOR']}>
-            <ModulePlaceholderPage
-              moduleName="Assigned Project Sites"
-              role="SUPERVISOR"
-              icon={MapPin}
-              description="Monitor active site zones, inspection schedules, and field access logs within your projects."
-              features={[
-                'Zone hazard alerts and field access controls',
-                'Daily inspection rosters per site',
-                'Supervisor sign-off on site safety clearance',
-                'GPS inspection check-in verification',
-              ]}
-            />
+            <SupervisorSitesPage />
           </ProtectedRoute>
         }
       />
@@ -322,18 +269,7 @@ export const AppRoutes: React.FC = () => {
         path="/supervisor/inspectors"
         element={
           <ProtectedRoute allowedRoles={['SUPERVISOR']}>
-            <ModulePlaceholderPage
-              moduleName="Field Inspectors Team"
-              role="SUPERVISOR"
-              icon={Users}
-              description="Manage inspector rosters assigned to your projects and monitor daily inspection throughput."
-              features={[
-                'Assign inspectors to specific project zones',
-                'Live inspector field status and task progress',
-                'Workload balancing and daily capacity tracking',
-                'Performance reviews and QA feedback logs',
-              ]}
-            />
+            <SupervisorSitesPage />
           </ProtectedRoute>
         }
       />
@@ -341,18 +277,7 @@ export const AppRoutes: React.FC = () => {
         path="/supervisor/assignments"
         element={
           <ProtectedRoute allowedRoles={['SUPERVISOR']}>
-            <ModulePlaceholderPage
-              moduleName="Inspection Assignments"
-              role="SUPERVISOR"
-              icon={ClipboardList}
-              description="Delegate work orders, assign inspection checklists, and set due dates for team inspectors."
-              features={[
-                'Create single and bulk inspection tasks',
-                'Assign specific checklist templates to inspectors',
-                'Set priority levels (Routine, Medium, Urgent, Safety Critical)',
-                'Track assignment completion status in real time',
-              ]}
-            />
+            <SupervisorSitesPage />
           </ProtectedRoute>
         }
       />
@@ -468,18 +393,23 @@ export const AppRoutes: React.FC = () => {
         path="/inspector/inspections"
         element={
           <ProtectedRoute allowedRoles={['INSPECTOR']}>
-            <ModulePlaceholderPage
-              moduleName="My Inspections"
-              role="INSPECTOR"
-              icon={ClipboardList}
-              description="View your scheduled, active, and completed field inspection work orders."
-              features={[
-                'Offline access to assigned inspection forms',
-                'Filter by Due Date, Site, Priority, or Status',
-                'One-touch checklist launch in field conditions',
-                'Automatic local caching in NirikshanLocalDB',
-              ]}
-            />
+            <InspectorMyInspectionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspector/my-sites"
+        element={
+          <ProtectedRoute allowedRoles={['INSPECTOR']}>
+            <InspectorMySitesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspector/sites"
+        element={
+          <ProtectedRoute allowedRoles={['INSPECTOR']}>
+            <InspectorMySitesPage />
           </ProtectedRoute>
         }
       />
