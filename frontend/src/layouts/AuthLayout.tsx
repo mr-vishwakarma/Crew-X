@@ -33,9 +33,11 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
 
         {/* Brand header */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
+          <img
+            src="/logo.jpg"
+            alt="Nirikshan Logo"
+            className="w-10 h-10 rounded-xl object-contain bg-black shadow-md ring-1 ring-blue-500/30"
+          />
           <div>
             <h1 className="text-xl font-bold tracking-tight text-white">Nirikshan</h1>
             <p className="text-xs text-slate-400 font-medium tracking-wide">
