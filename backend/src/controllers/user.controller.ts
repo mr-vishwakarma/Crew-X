@@ -7,6 +7,7 @@ import { User } from '../models/user.model.js';
 import { ProjectSupervisorAssignment, SiteInspectorAssignment } from '../models/assignment.model.js';
 import { Project } from '../models/project.model.js';
 import { Site } from '../models/site.model.js';
+import { EntitlementService } from '../services/entitlement.service.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 
 const createUserSchema = z.object({
@@ -47,6 +48,13 @@ export class UserController {
       }
 
       const { fullName, email, password, phone, employeeId } = parsed.data;
+
+      // Central Supervisor Seat Entitlement Check
+      const seatCheck = await EntitlementService.canAddSupervisor(orgId);
+      if (!seatCheck.allowed) {
+        sendError(res, seatCheck.reason || 'Supervisor seat limit reached for your subscription plan', 403);
+        return;
+      }
 
       const existingUser = await User.findOne({ email });
       if (existingUser) {
@@ -303,6 +311,11 @@ export class UserController {
       const { id } = req.params;
       const { isActive } = req.body;
 
+      if (!orgId) {
+        sendError(res, 'Organization context missing', 400);
+        return;
+      }
+
       if (typeof isActive !== 'boolean') {
         sendError(res, 'isActive boolean is required', 400);
         return;
@@ -317,6 +330,15 @@ export class UserController {
       if (!user) {
         sendError(res, 'Supervisor not found or unauthorized', 404);
         return;
+      }
+
+      // Check seat limit when activating a deactivated supervisor
+      if (isActive && !user.isActive) {
+        const seatCheck = await EntitlementService.canAddSupervisor(orgId);
+        if (!seatCheck.allowed) {
+          sendError(res, seatCheck.reason || 'Supervisor seat limit reached for your subscription plan', 403);
+          return;
+        }
       }
 
       user.isActive = isActive;
@@ -356,6 +378,13 @@ export class UserController {
       }
 
       const { fullName, email, password, phone, employeeId } = parsed.data;
+
+      // Central Supervisor Seat Entitlement Check
+      const seatCheck = await EntitlementService.canAddSupervisor(orgId);
+      if (!seatCheck.allowed) {
+        sendError(res, seatCheck.reason || 'Supervisor seat limit reached for your subscription plan', 403);
+        return;
+      }
 
       const existingUser = await User.findOne({ email });
       if (existingUser) {
@@ -631,6 +660,11 @@ export class UserController {
       const orgId = req.user?.organizationId;
       const { id } = req.params;
       const { isActive } = req.body;
+
+      if (!orgId) {
+        sendError(res, 'Organization context missing', 400);
+        return;
+      }
 
       if (typeof isActive !== 'boolean') {
         sendError(res, 'isActive boolean is required', 400);

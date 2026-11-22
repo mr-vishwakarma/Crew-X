@@ -8,7 +8,7 @@
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "seed": "tsx src/scripts/seed.ts",
-    "test": "tsx test/auth.unit.test.ts && tsx test/phase3.unit.test.ts && tsx test/dashboard.unit.test.ts && tsx test/assignment.unit.test.ts && tsx test/inspection.unit.test.ts"
+    "test": "tsx test/auth.unit.test.ts && tsx test/phase3.unit.test.ts && tsx test/dashboard.unit.test.ts && tsx test/assignment.unit.test.ts && tsx test/inspection.unit.test.ts && tsx test/phase3_master.unit.test.ts"
   },
   "keywords": [
     "inspection",
@@ -32,15 +32,18 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
     "express": "^4.21.2",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
     "morgan": "^1.10.0",
+    "pdfkit": "^0.21.0",
     "typescript": "^5.7.3",
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/pdfkit": "^0.17.7",
     "mongodb-memory-server": "^10.1.3",
     "tsx": "^4.19.2"
   }

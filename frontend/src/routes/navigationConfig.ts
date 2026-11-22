@@ -15,6 +15,7 @@ import {
   UserCircle,
   Home,
   FileSearch,
+  CreditCard,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { UserRole } from '../types/auth.types';
@@ -127,6 +128,13 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
         path: '/admin/sync',
         icon: RefreshCw,
         description: 'Device sync telemetry, offline logs and queue health',
+      },
+      {
+        id: 'admin-billing',
+        label: 'Billing & Plans',
+        path: '/admin/billing',
+        icon: CreditCard,
+        description: 'Subscription plans, supervisor seats & Razorpay billing',
       },
       {
         id: 'admin-settings',

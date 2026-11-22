@@ -20,6 +20,11 @@ import { AdminAssignmentsPage } from '../pages/admin/assignments/AdminAssignment
 import { SupervisorDashboardPage } from '../pages/supervisor/SupervisorDashboardPage';
 import { SupervisorProjectsPage } from '../pages/supervisor/projects/SupervisorProjectsPage';
 import { SupervisorSitesPage } from '../pages/supervisor/sites/SupervisorSitesPage';
+import { SupervisorReviewQueuePage } from '../pages/supervisor/reviews/SupervisorReviewQueuePage';
+import { SupervisorReviewDetailsPage } from '../pages/supervisor/reviews/SupervisorReviewDetailsPage';
+import { SupervisorConflictsPage } from '../pages/supervisor/conflicts/SupervisorConflictsPage';
+import { AdminExecutiveReportsPage } from '../pages/admin/reports/AdminExecutiveReportsPage';
+import { AdminBillingPage } from '../pages/admin/billing/AdminBillingPage';
 import { InspectorDashboardPage } from '../pages/inspector/InspectorDashboardPage';
 import { InspectorMySitesPage } from '../pages/inspector/sites/InspectorMySitesPage';
 import { InspectorMyInspectionsPage } from '../pages/inspector/inspections/InspectorMyInspectionsPage';
@@ -33,7 +38,6 @@ import {
   CheckCircle2,
   BarChart3,
   RefreshCw,
-  AlertTriangle,
   Camera,
   UserCircle,
 } from 'lucide-react';
@@ -196,18 +200,15 @@ export const AppRoutes: React.FC = () => {
         path="/admin/reports"
         element={
           <ProtectedRoute allowedRoles={['ADMIN']}>
-            <ModulePlaceholderPage
-              moduleName="Executive Reports & Compliance"
-              role="ADMIN"
-              icon={BarChart3}
-              description="High-level analytics, safety trend charts, and compliance exports for regulatory bodies."
-              features={[
-                'Executive compliance scorecard generation',
-                'Site failure rate and risk heatmaps',
-                'Export to PDF, Excel, and regulatory CSV formats',
-                'Automated weekly email summaries to stakeholders',
-              ]}
-            />
+            <AdminExecutiveReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/billing"
+        element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <AdminBillingPage />
           </ProtectedRoute>
         }
       />
@@ -305,38 +306,32 @@ export const AppRoutes: React.FC = () => {
       <Route
         path="/supervisor/conflicts"
         element={
-          <ProtectedRoute allowedRoles={['SUPERVISOR']}>
-            <ModulePlaceholderPage
-              moduleName="Conflict Resolution"
-              role="SUPERVISOR"
-              icon={AlertTriangle}
-              description="Resolve synchronization clashes, conflicting offline edits, and flagged inspection anomalies."
-              features={[
-                'Side-by-side inspection record diff viewer',
-                'Field revision vs. server revision comparison',
-                'Manual merge or authoritative version selection',
-                'Audit logging of supervisor resolution decisions',
-              ]}
-            />
+          <ProtectedRoute allowedRoles={['SUPERVISOR', 'ADMIN']}>
+            <SupervisorConflictsPage />
           </ProtectedRoute>
         }
       />
       <Route
         path="/supervisor/reports"
         element={
-          <ProtectedRoute allowedRoles={['SUPERVISOR']}>
-            <ModulePlaceholderPage
-              moduleName="Submissions & QA Reviews"
-              role="SUPERVISOR"
-              icon={BarChart3}
-              description="Review submitted field inspection records, approve quality standards, and generate site reports."
-              features={[
-                'Pending review queue with 1-click approval or rejection',
-                'Feedback and correction request workflow for inspectors',
-                'Site-level compliance summary reports',
-                'Export approved audits to client-facing PDFs',
-              ]}
-            />
+          <ProtectedRoute allowedRoles={['SUPERVISOR', 'ADMIN']}>
+            <SupervisorReviewQueuePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/supervisor/reviews"
+        element={
+          <ProtectedRoute allowedRoles={['SUPERVISOR', 'ADMIN']}>
+            <SupervisorReviewQueuePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/supervisor/reviews/:id"
+        element={
+          <ProtectedRoute allowedRoles={['SUPERVISOR', 'ADMIN']}>
+            <SupervisorReviewDetailsPage />
           </ProtectedRoute>
         }
       />

@@ -68,8 +68,14 @@ export const createApp = (): Express => {
 
   app.use(cors(corsOptions));
 
-  // Body parsers
-  app.use(express.json());
+  // Body parsers with raw body preservation for HMAC webhook signature verification
+  app.use(
+    express.json({
+      verify: (req: any, _res, buf) => {
+        req.rawBody = buf;
+      },
+    })
+  );
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
 
