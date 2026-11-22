@@ -23,6 +23,8 @@ import { SupervisorSitesPage } from '../pages/supervisor/sites/SupervisorSitesPa
 import { InspectorDashboardPage } from '../pages/inspector/InspectorDashboardPage';
 import { InspectorMySitesPage } from '../pages/inspector/sites/InspectorMySitesPage';
 import { InspectorMyInspectionsPage } from '../pages/inspector/inspections/InspectorMyInspectionsPage';
+import { InspectorChecklistPage } from '../pages/inspector/checklist/InspectorChecklistPage';
+import { InspectorSyncCentrePage } from '../pages/inspector/sync/InspectorSyncCentrePage';
 import { ModulePlaceholderPage } from '../pages/common/ModulePlaceholderPage';
 import { UnauthorizedPage } from '../pages/UnauthorizedPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
@@ -416,19 +418,16 @@ export const AppRoutes: React.FC = () => {
       <Route
         path="/inspector/checklist"
         element={
-          <ProtectedRoute allowedRoles={['INSPECTOR']}>
-            <ModulePlaceholderPage
-              moduleName="Offline Checklist Form"
-              role="INSPECTOR"
-              icon={FileCheck2}
-              description="Interactive field inspection form with local auto-save, validation, and photo attachment."
-              features={[
-                'Instant auto-save to IndexedDB as you type',
-                'Single-tap Yes/No/NA compliance answers',
-                'Mandatory photo attachment enforcement for defects',
-                'Offline GPS coordinate stamp capture',
-              ]}
-            />
+          <ProtectedRoute allowedRoles={['INSPECTOR', 'ADMIN']}>
+            <InspectorChecklistPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspector/checklist/:id"
+        element={
+          <ProtectedRoute allowedRoles={['INSPECTOR', 'ADMIN']}>
+            <InspectorChecklistPage />
           </ProtectedRoute>
         }
       />
@@ -454,19 +453,16 @@ export const AppRoutes: React.FC = () => {
       <Route
         path="/inspector/sync"
         element={
-          <ProtectedRoute allowedRoles={['INSPECTOR']}>
-            <ModulePlaceholderPage
-              moduleName="Sync Centre"
-              role="INSPECTOR"
-              icon={RefreshCw}
-              description="Manage local drafts, monitor pending sync queues, and upload records when connected."
-              features={[
-                'Visual count of items pending upload in IndexedDB',
-                'Auto-sync triggered whenever internet connectivity returns',
-                'Manual "Sync Now" button with progress indicator',
-                'Offline conflict warnings and resolution status',
-              ]}
-            />
+          <ProtectedRoute allowedRoles={['INSPECTOR', 'ADMIN']}>
+            <InspectorSyncCentrePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inspector/sync-centre"
+        element={
+          <ProtectedRoute allowedRoles={['INSPECTOR', 'ADMIN']}>
+            <InspectorSyncCentrePage />
           </ProtectedRoute>
         }
       />

@@ -1,15 +1,23 @@
 import { db } from './db';
-import type { LocalInspection, SyncQueueItem } from './schema';
+import type {
+  LocalInspection,
+  LocalPhoto,
+  SyncQueueItem,
+  DownloadedAssignment,
+} from './schema';
 
 export interface DatabaseHealth {
   isAvailable: boolean;
   name: string;
   version: number;
   isPersistentStorage: boolean;
+  storageEstimatedUsage?: number;
+  storageEstimatedQuota?: number;
   tables: {
     inspectionsCount: number;
     photosCount: number;
     syncQueueCount: number;
+    downloadedAssignmentsCount: number;
   };
   error?: string;
 }
@@ -41,7 +49,7 @@ export const requestPersistentStorage = async (): Promise<boolean> => {
 };
 
 /**
- * Retrieves database health metrics and table counts
+ * Retrieves database health metrics, table counts, and storage estimate
  */
 export const getDatabaseHealth = async (): Promise<DatabaseHealth> => {
   if (!isIndexedDBAvailable()) {
@@ -50,7 +58,12 @@ export const getDatabaseHealth = async (): Promise<DatabaseHealth> => {
       name: 'NirikshanLocalDB',
       version: 0,
       isPersistentStorage: false,
-      tables: { inspectionsCount: 0, photosCount: 0, syncQueueCount: 0 },
+      tables: {
+        inspectionsCount: 0,
+        photosCount: 0,
+        syncQueueCount: 0,
+        downloadedAssignmentsCount: 0,
+      },
       error: 'IndexedDB is not supported in this browser.',
     };
   }
@@ -60,11 +73,20 @@ export const getDatabaseHealth = async (): Promise<DatabaseHealth> => {
       await db.open();
     }
 
-    const [inspectionsCount, photosCount, syncQueueCount, isPersisted] = await Promise.all([
+    const [
+      inspectionsCount,
+      photosCount,
+      syncQueueCount,
+      downloadedAssignmentsCount,
+      isPersisted,
+      estimate,
+    ] = await Promise.all([
       db.inspections.count(),
       db.photos.count(),
       db.syncQueue.count(),
+      db.downloadedAssignments.count(),
       navigator.storage?.persisted ? navigator.storage.persisted() : Promise.resolve(false),
+      navigator.storage?.estimate ? navigator.storage.estimate() : Promise.resolve({ usage: 0, quota: 0 }),
     ]);
 
     return {
@@ -72,10 +94,13 @@ export const getDatabaseHealth = async (): Promise<DatabaseHealth> => {
       name: db.name,
       version: db.verno,
       isPersistentStorage: isPersisted,
+      storageEstimatedUsage: estimate.usage,
+      storageEstimatedQuota: estimate.quota,
       tables: {
         inspectionsCount,
         photosCount,
         syncQueueCount,
+        downloadedAssignmentsCount,
       },
     };
   } catch (err) {
@@ -85,7 +110,12 @@ export const getDatabaseHealth = async (): Promise<DatabaseHealth> => {
       name: 'NirikshanLocalDB',
       version: 0,
       isPersistentStorage: false,
-      tables: { inspectionsCount: 0, photosCount: 0, syncQueueCount: 0 },
+      tables: {
+        inspectionsCount: 0,
+        photosCount: 0,
+        syncQueueCount: 0,
+        downloadedAssignmentsCount: 0,
+      },
       error: message,
     };
   }
@@ -97,13 +127,10 @@ export const getDatabaseHealth = async (): Promise<DatabaseHealth> => {
 export const getPendingSyncCount = async (): Promise<number> => {
   try {
     if (!db.isOpen()) await db.open();
-    // Count items in syncQueue with status 'pending' or 'failed'
-    const queueCount = await db.syncQueue
+    return await db.syncQueue
       .where('status')
       .anyOf('pending', 'failed', 'syncing')
       .count();
-
-    return queueCount;
   } catch (err) {
     console.error('[IndexedDB] Error reading pending sync count:', err);
     return 0;
@@ -116,7 +143,10 @@ export const getPendingSyncCount = async (): Promise<number> => {
 export const getLocalDraftsCount = async (): Promise<number> => {
   try {
     if (!db.isOpen()) await db.open();
-    return await db.inspections.where('syncStatus').equals('draft').count();
+    return await db.inspections
+      .where('syncStatus')
+      .equals('draft')
+      .count();
   } catch (err) {
     console.error('[IndexedDB] Error reading draft count:', err);
     return 0;
@@ -124,12 +154,17 @@ export const getLocalDraftsCount = async (): Promise<number> => {
 };
 
 /**
- * Fetch all locally saved inspection records
+ * Fetch all locally saved inspection records, optionally filtered by inspector
  */
-export const getAllLocalInspections = async (): Promise<LocalInspection[]> => {
+export const getAllLocalInspections = async (inspectorId?: string): Promise<LocalInspection[]> => {
   try {
     if (!db.isOpen()) await db.open();
-    return await db.inspections.orderBy('updatedAt').reverse().toArray();
+    let query = db.inspections.orderBy('updatedAt').reverse();
+    const records = await query.toArray();
+    if (inspectorId) {
+      return records.filter((r) => !r.inspectorId || r.inspectorId === inspectorId);
+    }
+    return records;
   } catch (err) {
     console.error('[IndexedDB] Error fetching local inspections:', err);
     return [];
@@ -137,16 +172,215 @@ export const getAllLocalInspections = async (): Promise<LocalInspection[]> => {
 };
 
 /**
- * Helper to create a sample local draft inspection and queue item for testing/demo purposes
+ * Fetch a single inspection by its local or remote ID
+ */
+export const getLocalInspectionById = async (id: string): Promise<LocalInspection | undefined> => {
+  try {
+    if (!db.isOpen()) await db.open();
+    return await db.inspections.get(id);
+  } catch (err) {
+    console.error(`[IndexedDB] Error fetching inspection ${id}:`, err);
+    return undefined;
+  }
+};
+
+/**
+ * Save or update an inspection record in Dexie.js
+ * Automatically enqueues to syncQueue if marked pending_sync or submitted
+ */
+export const saveLocalInspection = async (
+  record: Partial<LocalInspection> & { id: string; siteId: string; assignmentId: string }
+): Promise<LocalInspection> => {
+  if (!db.isOpen()) await db.open();
+
+  const now = new Date().toISOString();
+  const existing = await db.inspections.get(record.id);
+
+  const updatedRecord: LocalInspection = {
+    id: record.id,
+    assignmentId: record.assignmentId,
+    siteId: record.siteId,
+    siteName: record.siteName ?? existing?.siteName ?? 'Construction Site',
+    projectName: record.projectName ?? existing?.projectName ?? 'Project',
+    templateName: record.templateName ?? existing?.templateName ?? 'Field Safety Checklist',
+    inspectorId: record.inspectorId ?? existing?.inspectorId,
+    organizationId: record.organizationId ?? existing?.organizationId,
+    answers: record.answers ?? existing?.answers ?? {},
+    notes: record.notes ?? existing?.notes ?? '',
+    latitude: record.latitude ?? existing?.latitude ?? null,
+    longitude: record.longitude ?? existing?.longitude ?? null,
+    gpsAccuracy: record.gpsAccuracy ?? existing?.gpsAccuracy ?? null,
+    serverVersion: record.serverVersion ?? existing?.serverVersion ?? 0,
+    localRevision: (existing?.localRevision ?? 0) + 1,
+    syncStatus: record.syncStatus ?? existing?.syncStatus ?? 'draft',
+    workflowStatus: record.workflowStatus ?? existing?.workflowStatus ?? 'DRAFT',
+    createdAt: existing?.createdAt ?? record.createdAt ?? now,
+    updatedAt: now,
+  };
+
+  await db.transaction('rw', db.inspections, db.syncQueue, async () => {
+    await db.inspections.put(updatedRecord);
+
+    // If marked ready for submission or pending sync, ensure syncQueue has an entry
+    if (updatedRecord.syncStatus === 'pending_sync' || updatedRecord.workflowStatus === 'SUBMITTED') {
+      const queueId = `queue_${updatedRecord.id}`;
+      const existingQueue = await db.syncQueue.get(queueId);
+      const queueItem: SyncQueueItem = {
+        id: queueId,
+        entityId: updatedRecord.id,
+        entityType: 'inspection',
+        action: existing ? 'UPDATE' : 'CREATE',
+        status: 'pending',
+        attempts: existingQueue ? existingQueue.attempts : 0,
+        payload: {
+          inspectionId: updatedRecord.id,
+          siteId: updatedRecord.siteId,
+          assignmentId: updatedRecord.assignmentId,
+          answers: updatedRecord.answers,
+          notes: updatedRecord.notes,
+          latitude: updatedRecord.latitude,
+          longitude: updatedRecord.longitude,
+          gpsAccuracy: updatedRecord.gpsAccuracy,
+          workflowStatus: updatedRecord.workflowStatus,
+        },
+        createdAt: existingQueue ? existingQueue.createdAt : now,
+        updatedAt: now,
+      };
+      await db.syncQueue.put(queueItem);
+    }
+  });
+
+  return updatedRecord;
+};
+
+/**
+ * Save a captured photo as a Blob in Dexie.js
+ */
+export const saveLocalPhoto = async (
+  photoData: {
+    inspectionId: string;
+    blob: Blob;
+    fileName: string;
+    mimeType: string;
+    caption?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+  }
+): Promise<LocalPhoto> => {
+  if (!db.isOpen()) await db.open();
+
+  const id = `photo_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const now = new Date().toISOString();
+
+  const photo: LocalPhoto = {
+    id,
+    inspectionId: photoData.inspectionId,
+    blob: photoData.blob,
+    fileName: photoData.fileName,
+    mimeType: photoData.mimeType,
+    fileSizeBytes: photoData.blob.size,
+    caption: photoData.caption,
+    latitude: photoData.latitude,
+    longitude: photoData.longitude,
+    syncStatus: 'pending_sync',
+    createdAt: now,
+  };
+
+  const queueItem: SyncQueueItem = {
+    id: `queue_${id}`,
+    entityId: id,
+    entityType: 'photo',
+    action: 'CREATE',
+    status: 'pending',
+    attempts: 0,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await db.transaction('rw', db.photos, db.syncQueue, async () => {
+    await db.photos.put(photo);
+    await db.syncQueue.put(queueItem);
+  });
+
+  return photo;
+};
+
+/**
+ * Fetch all local photos associated with an inspection
+ */
+export const getLocalPhotosByInspectionId = async (inspectionId: string): Promise<LocalPhoto[]> => {
+  try {
+    if (!db.isOpen()) await db.open();
+    return await db.photos.where('inspectionId').equals(inspectionId).toArray();
+  } catch (err) {
+    console.error(`[IndexedDB] Error fetching photos for inspection ${inspectionId}:`, err);
+    return [];
+  }
+};
+
+/**
+ * Delete a local photo from IndexedDB and sync queue
+ */
+export const deleteLocalPhoto = async (photoId: string): Promise<void> => {
+  if (!db.isOpen()) await db.open();
+  await db.transaction('rw', db.photos, db.syncQueue, async () => {
+    await db.photos.delete(photoId);
+    await db.syncQueue.delete(`queue_${photoId}`);
+  });
+};
+
+/**
+ * Download and store an assignment for offline access
+ */
+export const saveDownloadedAssignment = async (
+  assignment: DownloadedAssignment
+): Promise<DownloadedAssignment> => {
+  if (!db.isOpen()) await db.open();
+  await db.downloadedAssignments.put(assignment);
+  return assignment;
+};
+
+/**
+ * Get all downloaded assignments available offline
+ */
+export const getDownloadedAssignments = async (
+  inspectorId?: string
+): Promise<DownloadedAssignment[]> => {
+  try {
+    if (!db.isOpen()) await db.open();
+    let assignments = await db.downloadedAssignments.toArray();
+    if (inspectorId) {
+      assignments = assignments.filter((a) => a.inspectorId === inspectorId);
+    }
+    return assignments;
+  } catch (err) {
+    console.error('[IndexedDB] Error fetching downloaded assignments:', err);
+    return [];
+  }
+};
+
+/**
+ * Check if a specific assignment has been downloaded for offline access
+ */
+export const isAssignmentDownloaded = async (id: string): Promise<boolean> => {
+  try {
+    if (!db.isOpen()) await db.open();
+    const item = await db.downloadedAssignments.get(id);
+    return !!item;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Create a demo offline inspection for diagnostics/testing
  */
 export const createDemoLocalInspection = async (
   siteName = 'Metro Station North Wing',
   templateName = 'Civil Structure & Safety Checklist'
 ): Promise<LocalInspection> => {
   const id = `local_insp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  const now = new Date().toISOString();
-
-  const inspection: LocalInspection = {
+  return saveLocalInspection({
     id,
     assignmentId: `asg_${Date.now()}`,
     siteId: `site_${Math.floor(Math.random() * 1000)}`,
@@ -162,39 +396,20 @@ export const createDemoLocalInspection = async (
     longitude: 77.209,
     gpsAccuracy: 4.8,
     serverVersion: 0,
-    localRevision: 1,
     syncStatus: 'pending_sync',
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  const queueItem: SyncQueueItem = {
-    id: `queue_${id}`,
-    entityId: id,
-    entityType: 'inspection',
-    action: 'CREATE',
-    status: 'pending',
-    attempts: 0,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  await db.transaction('rw', db.inspections, db.syncQueue, async () => {
-    await db.inspections.add(inspection);
-    await db.syncQueue.add(queueItem);
+    workflowStatus: 'SUBMITTED',
   });
-
-  return inspection;
 };
 
 /**
- * Clear all demo records from local IndexedDB (utility for testing)
+ * Clear all records from local IndexedDB (utility for testing/reset)
  */
 export const clearLocalDatabase = async (): Promise<void> => {
   if (!db.isOpen()) await db.open();
-  await db.transaction('rw', db.inspections, db.photos, db.syncQueue, async () => {
+  await db.transaction('rw', db.inspections, db.photos, db.syncQueue, db.downloadedAssignments, async () => {
     await db.inspections.clear();
     await db.photos.clear();
     await db.syncQueue.clear();
+    await db.downloadedAssignments.clear();
   });
 };
