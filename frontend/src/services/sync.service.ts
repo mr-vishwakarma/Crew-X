@@ -132,11 +132,13 @@ class SyncCoordinator {
               continue;
             }
 
-            // Sync with backend
+            // Sync with backend using idempotent operationId
             const response = await apiClient.post('/inspections/sync', {
               inspectionId: inspection.id,
+              operationId: inspection.operationId || item.payload?.operationId || item.id,
               siteId: inspection.siteId,
               assignmentId: inspection.assignmentId,
+              checklistType: inspection.templateName,
               answers: inspection.answers,
               notes: inspection.notes,
               latitude: inspection.latitude,

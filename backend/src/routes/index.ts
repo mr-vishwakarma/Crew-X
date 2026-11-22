@@ -8,6 +8,7 @@ import dashboardRoutes from './dashboard.routes.js';
 import userRoutes from './user.routes.js';
 import assignmentRoutes from './assignment.routes.js';
 import inspectionRoutes from './inspection.routes.js';
+import checklistRoutes from './checklist.routes.js';
 import { AssignmentController } from '../controllers/assignment.controller.js';
 import { authenticate, authorize } from '../middleware/auth.middleware.js';
 
@@ -21,6 +22,7 @@ router.use('/sites', siteRoutes);
 router.use('/users', userRoutes);
 router.use('/assignments', assignmentRoutes);
 router.use('/inspections', inspectionRoutes);
+router.use('/checklists', checklistRoutes);
 
 // Direct top-level aliases requested in API specifications
 router.get('/supervisor/projects', authenticate, authorize(['ADMIN', 'SUPERVISOR']), AssignmentController.getSupervisorProjects);

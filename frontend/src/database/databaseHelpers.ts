@@ -4,6 +4,7 @@ import type {
   LocalPhoto,
   SyncQueueItem,
   DownloadedAssignment,
+  LocalChecklistTemplate,
 } from './schema';
 
 export interface DatabaseHealth {
@@ -159,8 +160,7 @@ export const getLocalDraftsCount = async (): Promise<number> => {
 export const getAllLocalInspections = async (inspectorId?: string): Promise<LocalInspection[]> => {
   try {
     if (!db.isOpen()) await db.open();
-    let query = db.inspections.orderBy('updatedAt').reverse();
-    const records = await query.toArray();
+    const records = await db.inspections.orderBy('updatedAt').reverse().toArray();
     if (inspectorId) {
       return records.filter((r) => !r.inspectorId || r.inspectorId === inspectorId);
     }
@@ -196,20 +196,32 @@ export const saveLocalInspection = async (
   const now = new Date().toISOString();
   const existing = await db.inspections.get(record.id);
 
+  const operationId = record.operationId || existing?.operationId || `op_${record.id}_${Date.now()}`;
+
   const updatedRecord: LocalInspection = {
     id: record.id,
     assignmentId: record.assignmentId,
     siteId: record.siteId,
-    siteName: record.siteName ?? existing?.siteName ?? 'Construction Site',
-    projectName: record.projectName ?? existing?.projectName ?? 'Project',
-    templateName: record.templateName ?? existing?.templateName ?? 'Field Safety Checklist',
+    siteName: record.siteName ?? existing?.siteName ?? 'Assigned Construction Site',
+    siteCode: record.siteCode ?? existing?.siteCode,
+    projectName: record.projectName ?? existing?.projectName ?? 'Assigned Project',
+    templateName: record.templateName ?? existing?.templateName ?? 'Standard Compliance Audit',
     inspectorId: record.inspectorId ?? existing?.inspectorId,
     organizationId: record.organizationId ?? existing?.organizationId,
+    operationId,
     answers: record.answers ?? existing?.answers ?? {},
     notes: record.notes ?? existing?.notes ?? '',
     latitude: record.latitude ?? existing?.latitude ?? null,
     longitude: record.longitude ?? existing?.longitude ?? null,
     gpsAccuracy: record.gpsAccuracy ?? existing?.gpsAccuracy ?? null,
+    gpsAltitude: record.gpsAltitude ?? existing?.gpsAltitude ?? null,
+    gpsAltitudeAccuracy: record.gpsAltitudeAccuracy ?? existing?.gpsAltitudeAccuracy ?? null,
+    gpsHeading: record.gpsHeading ?? existing?.gpsHeading ?? null,
+    gpsSpeed: record.gpsSpeed ?? existing?.gpsSpeed ?? null,
+    gpsCapturedAt: record.gpsCapturedAt ?? existing?.gpsCapturedAt,
+    gpsMethod: record.gpsMethod ?? existing?.gpsMethod,
+    isGpsStale: record.isGpsStale ?? existing?.isGpsStale ?? false,
+    isLocationMandatory: record.isLocationMandatory ?? existing?.isLocationMandatory ?? false,
     serverVersion: record.serverVersion ?? existing?.serverVersion ?? 0,
     localRevision: (existing?.localRevision ?? 0) + 1,
     syncStatus: record.syncStatus ?? existing?.syncStatus ?? 'draft',
@@ -222,7 +234,11 @@ export const saveLocalInspection = async (
     await db.inspections.put(updatedRecord);
 
     // If marked ready for submission or pending sync, ensure syncQueue has an entry
-    if (updatedRecord.syncStatus === 'pending_sync' || updatedRecord.workflowStatus === 'SUBMITTED') {
+    if (
+      updatedRecord.syncStatus === 'pending_sync' ||
+      updatedRecord.workflowStatus === 'SUBMITTED' ||
+      updatedRecord.workflowStatus === 'READY_TO_SUBMIT'
+    ) {
       const queueId = `queue_${updatedRecord.id}`;
       const existingQueue = await db.syncQueue.get(queueId);
       const queueItem: SyncQueueItem = {
@@ -234,14 +250,16 @@ export const saveLocalInspection = async (
         attempts: existingQueue ? existingQueue.attempts : 0,
         payload: {
           inspectionId: updatedRecord.id,
+          operationId: updatedRecord.operationId,
           siteId: updatedRecord.siteId,
           assignmentId: updatedRecord.assignmentId,
+          checklistType: updatedRecord.templateName,
           answers: updatedRecord.answers,
           notes: updatedRecord.notes,
           latitude: updatedRecord.latitude,
           longitude: updatedRecord.longitude,
           gpsAccuracy: updatedRecord.gpsAccuracy,
-          workflowStatus: updatedRecord.workflowStatus,
+          workflowStatus: 'SUBMITTED',
         },
         createdAt: existingQueue ? existingQueue.createdAt : now,
         updatedAt: now,
@@ -259,6 +277,7 @@ export const saveLocalInspection = async (
 export const saveLocalPhoto = async (
   photoData: {
     inspectionId: string;
+    questionId?: string;
     blob: Blob;
     fileName: string;
     mimeType: string;
@@ -275,6 +294,7 @@ export const saveLocalPhoto = async (
   const photo: LocalPhoto = {
     id,
     inspectionId: photoData.inspectionId,
+    questionId: photoData.questionId,
     blob: photoData.blob,
     fileName: photoData.fileName,
     mimeType: photoData.mimeType,
@@ -306,12 +326,20 @@ export const saveLocalPhoto = async (
 };
 
 /**
- * Fetch all local photos associated with an inspection
+ * Fetch all local photos associated with an inspection, optionally filtered by question
  */
-export const getLocalPhotosByInspectionId = async (inspectionId: string): Promise<LocalPhoto[]> => {
+export const getLocalPhotosByInspectionId = async (
+  inspectionId: string,
+  questionId?: string
+): Promise<LocalPhoto[]> => {
   try {
     if (!db.isOpen()) await db.open();
-    return await db.photos.where('inspectionId').equals(inspectionId).toArray();
+    let query = db.photos.where('inspectionId').equals(inspectionId);
+    const photos = await query.toArray();
+    if (questionId) {
+      return photos.filter((p) => p.questionId === questionId);
+    }
+    return photos;
   } catch (err) {
     console.error(`[IndexedDB] Error fetching photos for inspection ${inspectionId}:`, err);
     return [];
@@ -373,6 +401,33 @@ export const isAssignmentDownloaded = async (id: string): Promise<boolean> => {
 };
 
 /**
+ * Store a checklist template in local IndexedDB
+ */
+export const saveChecklistTemplate = async (
+  template: LocalChecklistTemplate
+): Promise<LocalChecklistTemplate> => {
+  if (!db.isOpen()) await db.open();
+  await db.checklistTemplates.put(template);
+  return template;
+};
+
+/**
+ * Fetch a checklist template from local IndexedDB
+ */
+export const getLocalChecklistTemplate = async (
+  idOrCode: string
+): Promise<LocalChecklistTemplate | undefined> => {
+  try {
+    if (!db.isOpen()) await db.open();
+    const item = await db.checklistTemplates.get(idOrCode);
+    if (item) return item;
+    return await db.checklistTemplates.where('templateCode').equals(idOrCode).first();
+  } catch {
+    return undefined;
+  }
+};
+
+/**
  * Create a demo offline inspection for diagnostics/testing
  */
 export const createDemoLocalInspection = async (
@@ -389,9 +444,8 @@ export const createDemoLocalInspection = async (
     answers: {
       q1_safety_gear: 'compliant',
       q2_perimeter_fence: 'compliant',
-      q3_hazardous_materials: 'none_detected',
     },
-    notes: 'Pre-shift perimeter inspection completed offline. No structural cracks observed.',
+    notes: 'Pre-shift perimeter inspection completed offline.',
     latitude: 28.6139,
     longitude: 77.209,
     gpsAccuracy: 4.8,
@@ -406,10 +460,19 @@ export const createDemoLocalInspection = async (
  */
 export const clearLocalDatabase = async (): Promise<void> => {
   if (!db.isOpen()) await db.open();
-  await db.transaction('rw', db.inspections, db.photos, db.syncQueue, db.downloadedAssignments, async () => {
-    await db.inspections.clear();
-    await db.photos.clear();
-    await db.syncQueue.clear();
-    await db.downloadedAssignments.clear();
-  });
+  await db.transaction(
+    'rw',
+    db.inspections,
+    db.photos,
+    db.syncQueue,
+    db.downloadedAssignments,
+    db.checklistTemplates,
+    async () => {
+      await db.inspections.clear();
+      await db.photos.clear();
+      await db.syncQueue.clear();
+      await db.downloadedAssignments.clear();
+      await db.checklistTemplates.clear();
+    }
+  );
 };

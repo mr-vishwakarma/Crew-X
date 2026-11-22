@@ -4,12 +4,15 @@ import { z } from 'zod';
 import { AuthenticatedRequest } from '../types/auth.types.js';
 import { Inspection } from '../models/inspection.model.js';
 import { Site } from '../models/site.model.js';
+import { SiteInspectorAssignment } from '../models/assignment.model.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 
 const syncInspectionSchema = z.object({
   inspectionId: z.string().min(1, 'Local inspection ID is required'),
+  operationId: z.string().optional(),
   siteId: z.string().min(1, 'Site ID is required'),
   assignmentId: z.string().optional(),
+  checklistType: z.string().optional(),
   answers: z.record(z.unknown()).optional(),
   notes: z.string().trim().optional(),
   latitude: z.number().nullable().optional(),
@@ -71,7 +74,43 @@ export class InspectionController {
           siteObjectId = site._id;
           projectObjectId = site.projectId;
           siteName = site.siteName;
+
+          // Validate that the inspector is actively assigned to this site
+          if (req.user?.role !== 'ADMIN') {
+            const hasAssignment = await SiteInspectorAssignment.findOne({
+              organizationId: orgId,
+              inspectorId: new Types.ObjectId(inspectorId),
+              siteId: siteObjectId,
+              status: 'ACTIVE',
+            });
+            if (!hasAssignment) {
+              sendError(res, 'Unauthorized: You are not actively assigned to this construction site', 403);
+              return;
+            }
+          }
         }
+      }
+
+      // Check idempotency: avoid duplicate records if already synced
+      const existing = await Inspection.findOne({
+        organizationId: orgId,
+        assignedInspectorId: new Types.ObjectId(inspectorId),
+        notes: { $regex: payload.inspectionId },
+      });
+
+      if (existing) {
+        sendSuccess(
+          res,
+          {
+            syncedId: existing._id.toString(),
+            localId: payload.inspectionId,
+            inspectionCode: existing.inspectionCode,
+            status: existing.status,
+            syncedAt: existing.syncedAt,
+          },
+          'Inspection already synchronized (idempotent)'
+        );
+        return;
       }
 
       // Fallback: if site was created during offline or test

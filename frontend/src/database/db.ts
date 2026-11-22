@@ -1,5 +1,11 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { LocalInspection, LocalPhoto, SyncQueueItem, DownloadedAssignment } from './schema';
+import type {
+  LocalInspection,
+  LocalPhoto,
+  SyncQueueItem,
+  DownloadedAssignment,
+  LocalChecklistTemplate,
+} from './schema';
 
 /**
  * NirikshanLocalDB
@@ -11,6 +17,7 @@ export class NirikshanLocalDB extends Dexie {
   photos!: EntityTable<LocalPhoto, 'id'>;
   syncQueue!: EntityTable<SyncQueueItem, 'id'>;
   downloadedAssignments!: EntityTable<DownloadedAssignment, 'id'>;
+  checklistTemplates!: EntityTable<LocalChecklistTemplate, 'id'>;
 
   constructor() {
     super('NirikshanLocalDB');
@@ -28,6 +35,15 @@ export class NirikshanLocalDB extends Dexie {
       photos: '&id, inspectionId, syncStatus, createdAt',
       syncQueue: '&id, entityId, entityType, status, createdAt',
       downloadedAssignments: '&id, siteId, inspectorId, organizationId, downloadedAt',
+    });
+
+    // Schema version 3 (checklist templates & photo question links)
+    this.version(3).stores({
+      inspections: '&id, assignmentId, siteId, inspectorId, organizationId, syncStatus, updatedAt',
+      photos: '&id, inspectionId, questionId, syncStatus, createdAt',
+      syncQueue: '&id, entityId, entityType, status, createdAt',
+      downloadedAssignments: '&id, siteId, inspectorId, organizationId, downloadedAt',
+      checklistTemplates: '&id, templateCode, version, updatedAt',
     });
   }
 }
